@@ -176,7 +176,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <>
                   <div className="space-y-1">
                     <Label>Send To</Label>
-                    <Select value={form.recipientType} onValueChange={v => setForm(p => ({ ...p, recipientType: v, recipientId: "", toRole: "" }))}>
+                    <Select value={form.recipientType} onValueChange={v => setForm(p => ({ ...p, recipientType: v ?? "user", recipientId: "", toRole: "" }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user" label="Specific person">Specific person</SelectItem>
