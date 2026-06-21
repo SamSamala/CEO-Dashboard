@@ -71,9 +71,9 @@ export function GoalForm() {
             <div className="space-y-1">
               <Label>Department (optional)</Label>
               <Select onValueChange={v => setForm(p => ({ ...p, departmentId: v as string }))}>
-                <SelectTrigger><SelectValue placeholder="Company-wide" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Company-wide" /></SelectTrigger>
                 <SelectContent>
-                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  {departments.map(d => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

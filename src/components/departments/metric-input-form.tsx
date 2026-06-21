@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { submitMetrics } from "@/server/actions/metrics.actions";
+import { initDepartmentKpis } from "@/server/actions/setup.actions";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Send, AlertCircle } from "lucide-react";
+import { Loader2, Send, AlertCircle, BarChart2 } from "lucide-react";
 import { format, subDays } from "date-fns";
 
 interface KpiField {
@@ -41,6 +43,30 @@ export function MetricInputForm({
   kpiConfigs,
   recentEntries = [],
 }: MetricInputFormProps) {
+  const router = useRouter();
+  const { execute: initKpis, isPending: isInitPending } = useAction(initDepartmentKpis, {
+    onSuccess: () => { toast.success("KPIs set up — refresh to start submitting"); router.refresh(); },
+    onError: (err) => toast.error(err.error.serverError ?? "Failed"),
+  });
+
+  if (kpiConfigs.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+          <BarChart2 className="h-8 w-8" />
+          <p className="font-medium text-foreground">No KPIs configured</p>
+          <p className="text-sm text-center max-w-sm">
+            This department has no metrics to track yet. Click below to automatically set up default KPIs.
+          </p>
+          <Button onClick={() => initKpis({ departmentId })} disabled={isInitPending}>
+            {isInitPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Set up KPIs
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Default business date to yesterday (data is usually submitted the next day)
   const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
   const [businessDate, setBusinessDate] = useState(yesterday);

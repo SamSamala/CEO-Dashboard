@@ -8,6 +8,7 @@ import { BUILT_IN_ALERT_RULES } from "@/config/alert-rules.config";
 import { logAudit } from "@/lib/audit.helper";
 import { requirePermission } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
+import { getDeptConfig } from "@/config/departments.config";
 
 const updateCompanyDetailsSchema = z.object({
   name: z.string().min(1),
@@ -260,6 +261,30 @@ export const createCustomDepartment = authActionClient
       },
     });
 
+    // Seed KPIs: use predefined template if slug matches, else create generic ones
+    const deptCfg = getDeptConfig(slug);
+    const kpisToCreate = deptCfg
+      ? deptCfg.kpis.map((kpi) => ({
+          companyId: ctx.companyId,
+          departmentId: dept.id,
+          key: kpi.key,
+          label: kpi.label,
+          unit: kpi.unit,
+          targetValue: kpi.defaultTarget,
+          warningThreshold: kpi.warningThreshold,
+          criticalThreshold: kpi.criticalThreshold,
+          weight: kpi.weight,
+          isBottleneckKpi: kpi.isBottleneckKpi,
+          aggregation: kpi.aggregation,
+        }))
+      : [
+          { companyId: ctx.companyId, departmentId: dept.id, key: "tasks_completed", label: "Tasks Completed", unit: "count", targetValue: 10, warningThreshold: 0.7, criticalThreshold: 0.4, weight: 0.4, isBottleneckKpi: false, aggregation: "sum" },
+          { companyId: ctx.companyId, departmentId: dept.id, key: "efficiency_rate", label: "Efficiency Rate", unit: "percentage", targetValue: 80, warningThreshold: 0.7, criticalThreshold: 0.5, weight: 0.35, isBottleneckKpi: false, aggregation: "avg" },
+          { companyId: ctx.companyId, departmentId: dept.id, key: "issues_resolved", label: "Issues Resolved", unit: "count", targetValue: 5, warningThreshold: 0.6, criticalThreshold: 0.3, weight: 0.25, isBottleneckKpi: false, aggregation: "sum" },
+        ];
+
+    await prisma.kpiConfig.createMany({ data: kpisToCreate });
+
     await logAudit(prisma, {
       companyId: ctx.companyId,
       userId: ctx.userId,
@@ -273,6 +298,50 @@ export const createCustomDepartment = authActionClient
     revalidatePath("/settings");
 
     return { departmentId: dept.id };
+  });
+
+const initDepartmentKpisSchema = z.object({ departmentId: z.string() });
+
+export const initDepartmentKpis = authActionClient
+  .metadata({ actionName: "initDepartmentKpis" })
+  .schema(initDepartmentKpisSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    requirePermission(ctx.role, "departments:manage");
+
+    const dept = await prisma.department.findFirst({
+      where: { id: parsedInput.departmentId, companyId: ctx.companyId },
+    });
+    if (!dept) throw new Error("Department not found");
+
+    const existing = await prisma.kpiConfig.count({
+      where: { departmentId: dept.id, companyId: ctx.companyId },
+    });
+    if (existing > 0) throw new Error("Department already has KPIs configured");
+
+    const deptCfg = getDeptConfig(dept.slug);
+    const kpisToCreate = deptCfg
+      ? deptCfg.kpis.map((kpi) => ({
+          companyId: ctx.companyId,
+          departmentId: dept.id,
+          key: kpi.key,
+          label: kpi.label,
+          unit: kpi.unit,
+          targetValue: kpi.defaultTarget,
+          warningThreshold: kpi.warningThreshold,
+          criticalThreshold: kpi.criticalThreshold,
+          weight: kpi.weight,
+          isBottleneckKpi: kpi.isBottleneckKpi,
+          aggregation: kpi.aggregation,
+        }))
+      : [
+          { companyId: ctx.companyId, departmentId: dept.id, key: "tasks_completed", label: "Tasks Completed", unit: "count", targetValue: 10, warningThreshold: 0.7, criticalThreshold: 0.4, weight: 0.4, isBottleneckKpi: false, aggregation: "sum" },
+          { companyId: ctx.companyId, departmentId: dept.id, key: "efficiency_rate", label: "Efficiency Rate", unit: "percentage", targetValue: 80, warningThreshold: 0.7, criticalThreshold: 0.5, weight: 0.35, isBottleneckKpi: false, aggregation: "avg" },
+          { companyId: ctx.companyId, departmentId: dept.id, key: "issues_resolved", label: "Issues Resolved", unit: "count", targetValue: 5, warningThreshold: 0.6, criticalThreshold: 0.3, weight: 0.25, isBottleneckKpi: false, aggregation: "sum" },
+        ];
+
+    await prisma.kpiConfig.createMany({ data: kpisToCreate });
+    revalidatePath(`/departments/${dept.slug}`);
+    return { count: kpisToCreate.length };
   });
 
 const completeOnboardingSchema = z.object({});
