@@ -176,7 +176,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <>
                   <div className="space-y-1">
                     <Label>Send To</Label>
-                    <Select value={form.recipientType} onValueChange={v => setForm(p => ({ ...p, recipientType: v ?? "user", recipientId: "", toRole: "" }))}>
+                    <Select value={form.recipientType} onValueChange={v => setForm(p => ({ ...p, recipientType: String(v || "user"), recipientId: "", toRole: "" }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user" label="Specific person">Specific person</SelectItem>
@@ -188,7 +188,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                   {form.recipientType === "user" ? (
                     <div className="space-y-1">
                       <Label>Recipient</Label>
-                      <Select onValueChange={v => setForm(p => ({ ...p, recipientId: v ?? "" }))}>
+                      <Select onValueChange={v => setForm(p => ({ ...p, recipientId: String(v || "") }))}>
                         <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
                         <SelectContent>
                           {companyUsers.map(u => (
@@ -202,7 +202,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                   ) : (
                     <div className="space-y-1">
                       <Label>Broadcast to Role</Label>
-                      <Select onValueChange={v => setForm(p => ({ ...p, toRole: v ?? "" }))}>
+                      <Select onValueChange={v => setForm(p => ({ ...p, toRole: String(v || "") }))}>
                         <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                         <SelectContent>
                           {["CEO", "DEPT_HEAD", "EMPLOYEE"].map(r => (
