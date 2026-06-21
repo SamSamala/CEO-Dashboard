@@ -70,7 +70,7 @@ export function InviteUserForm({ departments }: Props) {
               <Select onValueChange={v => setForm(p => ({ ...p, departmentId: v as string }))}>
                 <SelectTrigger><SelectValue placeholder="Select dept" /></SelectTrigger>
                 <SelectContent>
-                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  {departments.map(d => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -75,7 +75,7 @@ export default function NewHiringPage() {
               <Label>Department *</Label>
               <Select onValueChange={(v) => setForm(p => ({ ...p, departmentId: v as string }))}>
                 <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-                <SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">

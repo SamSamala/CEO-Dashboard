@@ -94,7 +94,7 @@ export function DataImportClient({ departments, templates, recentJobs }: Props) 
               }}>
                 <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                 <SelectContent>
-                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  {departments.map(d => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

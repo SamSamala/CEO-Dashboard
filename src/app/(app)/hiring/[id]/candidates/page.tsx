@@ -16,6 +16,15 @@ import { ChevronRight, Plus, User } from "lucide-react";
 const STAGES = ["APPLIED", "SCREENING", "INTERVIEW", "OFFER", "HIRED", "REJECTED"] as const;
 type Stage = typeof STAGES[number];
 
+const STAGE_LABELS: Record<Stage, string> = {
+  APPLIED: "Applied",
+  SCREENING: "Screen",
+  INTERVIEW: "Interview",
+  OFFER: "Offer",
+  HIRED: "Hire",
+  REJECTED: "Reject",
+};
+
 const STAGE_COLORS: Record<Stage, string> = {
   APPLIED: "bg-muted text-muted-foreground",
   SCREENING: "bg-blue-100 text-blue-700",
@@ -97,11 +106,11 @@ export default function CandidatesPage() {
                         key={nextStage}
                         variant="outline"
                         size="sm"
-                        className="h-5 text-xs px-1.5"
+                        className="h-6 text-xs px-2"
                         disabled={advancing}
                         onClick={() => advance({ candidateId: c.id, toStage: nextStage })}
                       >
-                        → {nextStage.slice(0, 4)}
+                        → {STAGE_LABELS[nextStage]}
                       </Button>
                     ))}
                   </div>
