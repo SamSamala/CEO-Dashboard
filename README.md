@@ -1,6 +1,6 @@
 # CEO Business Operating System
 
-A complete business operating system for founders and their teams. Track KPIs, detect bottlenecks automatically, manage approvals, monitor budgets, and get a real-time health score for every department. No technical setup — deploys in minutes with a free Vercel account.
+A complete business operating system for founders and their teams. Track KPIs, detect bottlenecks automatically, manage approvals, monitor budgets, and get a real-time health score for every department. No technical setup — deploy in minutes with a free Vercel account.
 
 ---
 
