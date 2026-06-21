@@ -7,10 +7,9 @@ import { NAV_SECTIONS } from "@/config/nav.config";
 import {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
   UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge,
-  ChevronLeft, ChevronRight
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
@@ -44,11 +43,12 @@ export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activ
   return (
     <aside
       className={cn(
-        "relative flex flex-col border-r bg-sidebar h-screen transition-all duration-200",
+        "flex flex-col border-r bg-sidebar h-screen transition-all duration-200 shrink-0",
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className={cn("flex items-center h-14 border-b px-4", collapsed && "justify-center px-0")}>
+      {/* Logo */}
+      <div className={cn("flex items-center h-14 border-b px-4 shrink-0", collapsed && "justify-center px-0")}>
         <Link
           href={role === "CEO" ? "/dashboard" : "/departments"}
           className="flex items-center gap-2"
@@ -62,7 +62,11 @@ export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activ
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4">
+      {/* Nav — scrollable but no visible scrollbar */}
+      <nav
+        className="flex-1 py-4 px-2 space-y-4 overflow-y-auto"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {visibleSections.map((section) => (
           <div key={section.title}>
             {!collapsed && (
@@ -73,7 +77,6 @@ export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activ
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = ICON_MAP[item.icon] ?? Settings;
-                // Dashboard routes to CEO view or departments based on role
                 const href = item.href === "/dashboard" && role !== "CEO"
                   ? "/departments"
                   : item.href;
@@ -111,14 +114,27 @@ export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activ
         ))}
       </nav>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute -right-3 top-16 h-6 w-6 rounded-full border bg-background shadow-sm z-10"
-        onClick={() => setCollapsed(!collapsed)}
-      >
-        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-      </Button>
+      {/* Collapse button — clean, fixed at bottom */}
+      <div className="shrink-0 border-t p-2">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={cn(
+            "flex items-center gap-2 w-full rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+            collapsed && "justify-center px-0"
+          )}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed
+            ? <PanelLeftOpen className="h-4 w-4 shrink-0" />
+            : (
+              <>
+                <PanelLeftClose className="h-4 w-4 shrink-0" />
+                <span className="text-xs">Collapse</span>
+              </>
+            )
+          }
+        </button>
+      </div>
     </aside>
   );
 }

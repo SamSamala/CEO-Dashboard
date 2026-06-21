@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Building2 } from "lucide-react";
+import Link from "next/link";
 
 export default function NewHiringPage() {
   const router = useRouter();
@@ -42,6 +43,26 @@ export default function NewHiringPage() {
       salaryMax: form.salaryMax ? parseFloat(form.salaryMax) : undefined,
       jobDescription: form.jobDescription || undefined,
     });
+  }
+
+  if (departments.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <h1 className="text-2xl font-bold mb-6">New Hiring Request</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+            <Building2 className="h-8 w-8" />
+            <p className="font-medium text-foreground">No departments found</p>
+            <p className="text-sm text-center">
+              You need to create at least one department before you can submit a hiring request.
+            </p>
+            <Link href="/departments">
+              <Button>Go to Departments</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

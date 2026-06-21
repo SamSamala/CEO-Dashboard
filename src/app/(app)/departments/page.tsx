@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { computeDeptScorecard } from "@/server/services/kpi.service";
 import { DeptStatusBadge } from "@/components/departments/dept-status-badge";
+import { CreateDepartmentDialog } from "@/components/departments/create-department-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 
 export const metadata = { title: "Departments" };
 
@@ -25,14 +26,32 @@ export default async function DepartmentsPage() {
     )
   );
 
+  const isCeo = session.user.role === "CEO";
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Departments</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          All departments and their current performance
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Departments</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            All departments and their current performance
+          </p>
+        </div>
+        {isCeo && <CreateDepartmentDialog />}
       </div>
+
+      {departments.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+            <Building2 className="h-8 w-8" />
+            <p className="font-medium text-foreground">No departments yet</p>
+            <p className="text-sm text-center max-w-sm">
+              Create your first department to start tracking KPIs, hiring, and performance.
+            </p>
+            {isCeo && <CreateDepartmentDialog />}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {departments.map((dept, i) => {
