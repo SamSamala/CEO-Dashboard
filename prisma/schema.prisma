@@ -141,6 +141,7 @@ model Company {
   auditLogs               AuditLog[]
   departmentRelationships DepartmentRelationship[]
   customRoles             CustomRole[]
+  messages                Message[]
 
   @@index([slug])
 }
@@ -200,6 +201,8 @@ model User {
   auditLogs          AuditLog[]
   ownedGoals         Goal[]             @relation("GoalOwner")
   metricEntries      MetricEntry[]      @relation("MetricEntrySubmitter")
+  sentMessages       Message[]          @relation("MessageSender")
+  receivedMessages   Message[]          @relation("MessageRecipient")
 
   @@unique([companyId, email])
   @@unique([companyId, employeeId])
@@ -721,4 +724,29 @@ model AuditLog {
   @@index([companyId, entityType, entityId])
   @@index([companyId, userId])
   @@index([companyId, createdAt])
+}
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+
+model Message {
+  id          String    @id @default(cuid())
+  companyId   String
+  senderId    String
+  recipientId String?
+  toRole      String?
+  subject     String
+  body        String    @db.Text
+  parentId    String?
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User?    @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  parent    Message? @relation("MessageThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Message[] @relation("MessageThread")
+
+  @@index([companyId, recipientId, createdAt])
+  @@index([companyId, senderId, createdAt])
+  @@index([createdAt])
 }

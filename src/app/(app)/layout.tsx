@@ -42,7 +42,7 @@ export default async function AppLayout({
     redirect("/settings/password?forced=1");
   }
 
-  const [pendingApprovals, activeAlerts, activeBottlenecks] = await Promise.all([
+  const [pendingApprovals, activeAlerts, activeBottlenecks, unreadMessages] = await Promise.all([
     companyId
       ? prisma.approval.count({ where: { companyId, status: "PENDING" } })
       : 0,
@@ -51,6 +51,20 @@ export default async function AppLayout({
       : 0,
     companyId && session.user.role === "CEO"
       ? prisma.bottleneck.count({ where: { companyId, resolvedAt: null, severity: { not: "NONE" } } })
+      : 0,
+    companyId
+      ? prisma.message.count({
+          where: {
+            companyId,
+            readAt: null,
+            parentId: null,
+            OR: [
+              { recipientId: userId },
+              { toRole: session.user.role },
+            ],
+            NOT: { senderId: userId },
+          },
+        })
       : 0,
   ]);
 
@@ -61,6 +75,7 @@ export default async function AppLayout({
         pendingApprovals={pendingApprovals}
         activeAlerts={activeAlerts}
         activeBottlenecks={activeBottlenecks}
+        unreadMessages={unreadMessages}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <AppHeader activeAlerts={activeAlerts} />

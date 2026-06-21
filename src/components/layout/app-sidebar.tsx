@@ -7,13 +7,13 @@ import { NAV_SECTIONS } from "@/config/nav.config";
 import {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
   UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
-  UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge,
+  UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge, MessageSquare,
 };
 
 interface AppSidebarProps {
@@ -21,9 +21,10 @@ interface AppSidebarProps {
   pendingApprovals?: number;
   activeAlerts?: number;
   activeBottlenecks?: number;
+  unreadMessages?: number;
 }
 
-export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activeBottlenecks = 0 }: AppSidebarProps) {
+export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activeBottlenecks = 0, unreadMessages = 0 }: AppSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -31,6 +32,7 @@ export function AppSidebar({ role, pendingApprovals = 0, activeAlerts = 0, activ
     pending: pendingApprovals,
     alerts: activeAlerts,
     bottlenecks: activeBottlenecks,
+    messages: unreadMessages,
   };
 
   const visibleSections = NAV_SECTIONS.map((section) => ({
