@@ -9,6 +9,7 @@ import { subHours } from "date-fns";
 const sendMessageSchema = z.object({
   recipientId: z.string().optional(),
   toRole: z.string().optional(),
+  teamId: z.string().optional(),
   subject: z.string().min(1).max(200),
   body: z.string().min(1).max(5000),
   parentId: z.string().optional(),
@@ -18,8 +19,8 @@ export const sendMessage = authActionClient
   .metadata({ actionName: "sendMessage" })
   .schema(sendMessageSchema)
   .action(async ({ parsedInput, ctx }) => {
-    if (!parsedInput.recipientId && !parsedInput.toRole) {
-      throw new Error("Specify a recipient or a role to broadcast to");
+    if (!parsedInput.recipientId && !parsedInput.toRole && !parsedInput.teamId) {
+      throw new Error("Specify a recipient, a role, or a team to broadcast to");
     }
 
     // Auto-cleanup messages older than 48 hours to keep storage light
@@ -36,6 +37,7 @@ export const sendMessage = authActionClient
         senderId: ctx.userId,
         recipientId: parsedInput.recipientId ?? null,
         toRole: parsedInput.toRole ?? null,
+        teamId: parsedInput.teamId ?? null,
         subject: parsedInput.subject,
         body: parsedInput.body,
         parentId: parsedInput.parentId ?? null,

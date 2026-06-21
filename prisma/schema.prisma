@@ -142,6 +142,8 @@ model Company {
   departmentRelationships DepartmentRelationship[]
   customRoles             CustomRole[]
   messages                Message[]
+  teams                   Team[]
+  employeesOfMonth        EmployeeOfMonth[]
 
   @@index([slug])
 }
@@ -199,10 +201,15 @@ model User {
   approvalDecisions  ApprovalDecision[]
   submittedApprovals Approval[]         @relation("ApprovalSubmitter")
   auditLogs          AuditLog[]
-  ownedGoals         Goal[]             @relation("GoalOwner")
-  metricEntries      MetricEntry[]      @relation("MetricEntrySubmitter")
-  sentMessages       Message[]          @relation("MessageSender")
-  receivedMessages   Message[]          @relation("MessageRecipient")
+  ownedGoals              Goal[]             @relation("GoalOwner")
+  metricEntries           MetricEntry[]      @relation("MetricEntrySubmitter")
+  sentMessages            Message[]          @relation("MessageSender")
+  receivedMessages        Message[]          @relation("MessageRecipient")
+  teamId                  String?
+  teamMembership          Team?              @relation("TeamMembers", fields: [teamId], references: [id])
+  ledTeam                 Team?              @relation("TeamLeader")
+  directedDepartment      Department?        @relation("DeptDirector")
+  eomAwards               EmployeeOfMonth[]  @relation("EomAwarder")
 
   @@unique([companyId, email])
   @@unique([companyId, employeeId])
@@ -261,6 +268,10 @@ model Department {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  directorId        String?                  @unique
+  director          User?                    @relation("DeptDirector", fields: [directorId], references: [id])
+  teams             Team[]
 
   company           Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   users             User[]
@@ -521,8 +532,11 @@ model Employee {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
+  teamId     String?
   company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   department Department? @relation(fields: [departmentId], references: [id])
+  team       Team?       @relation("EmployeeTeam", fields: [teamId], references: [id])
+  eomAwards  EmployeeOfMonth[]
 
   @@index([companyId, departmentId, employmentStatus])
 }
@@ -726,6 +740,53 @@ model AuditLog {
   @@index([companyId, createdAt])
 }
 
+// ─── TEAMS ───────────────────────────────────────────────────────────────────
+
+model Team {
+  id           String   @id @default(cuid())
+  companyId    String
+  departmentId String
+  name         String
+  description  String?
+  colorHex     String   @default("#6366f1")
+  leaderId     String?              @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department       Department        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  leader           User?             @relation("TeamLeader", fields: [leaderId], references: [id])
+  members          User[]            @relation("TeamMembers")
+  employeeMembers  Employee[]        @relation("EmployeeTeam")
+  employeesOfMonth EmployeeOfMonth[]
+  messages         Message[]         @relation("TeamMessages")
+
+  @@index([companyId, departmentId])
+}
+
+// ─── EMPLOYEE OF THE MONTH ────────────────────────────────────────────────────
+
+model EmployeeOfMonth {
+  id         String   @id @default(cuid())
+  companyId  String
+  teamId     String
+  employeeId String
+  month      Int
+  year       Int
+  reason     String?  @db.Text
+  awardedBy  String
+  createdAt  DateTime @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  awarder  User     @relation("EomAwarder", fields: [awardedBy], references: [id])
+
+  @@unique([teamId, month, year])
+  @@index([companyId])
+}
+
 // ─── MESSAGES ────────────────────────────────────────────────────────────────
 
 model Message {
@@ -740,11 +801,14 @@ model Message {
   readAt      DateTime?
   createdAt   DateTime  @default(now())
 
+  teamId    String?
+
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   recipient User?    @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   parent    Message? @relation("MessageThread", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Message[] @relation("MessageThread")
+  team      Team?    @relation("TeamMessages", fields: [teamId], references: [id])
 
   @@index([companyId, recipientId, createdAt])
   @@index([companyId, senderId, createdAt])

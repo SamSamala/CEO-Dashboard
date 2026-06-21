@@ -7,13 +7,13 @@ import { NAV_SECTIONS } from "@/config/nav.config";
 import {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
   UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge,
-  PanelLeftClose, PanelLeftOpen, MessageSquare,
+  PanelLeftClose, PanelLeftOpen, MessageSquare, Network,
 } from "lucide-react";
 import { useState } from "react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Building2, CheckCircle, PieChart, CreditCard,
-  UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge, MessageSquare,
+  UserPlus, Users, Target, Bell, FileText, Upload, Settings, Gauge, MessageSquare, Network,
 };
 
 interface AppSidebarProps {

@@ -42,6 +42,12 @@ export default async function AppLayout({
     redirect("/settings/password?forced=1");
   }
 
+  // Get user's teamId for unread team messages
+  const dbUserTeam = companyId
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
+    : null;
+  const userTeamId = dbUserTeam?.teamId ?? null;
+
   const [pendingApprovals, activeAlerts, activeBottlenecks, unreadMessages] = await Promise.all([
     companyId
       ? prisma.approval.count({ where: { companyId, status: "PENDING" } })
@@ -61,6 +67,7 @@ export default async function AppLayout({
             OR: [
               { recipientId: userId },
               { toRole: session.user.role },
+              ...(userTeamId ? [{ teamId: userTeamId }] : []),
             ],
             NOT: { senderId: userId },
           },

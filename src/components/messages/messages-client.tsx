@@ -5,28 +5,30 @@ import { useAction } from "next-safe-action/hooks";
 import { sendMessage, markMessageRead, deleteMessage } from "@/server/actions/messages.actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { Loader2, Plus, Reply, Trash2, MessageSquare, Inbox, Send } from "lucide-react";
 
-type User = { id: string; name: string; email: string; role: string };
+type User = { id: string; name: string | null; email: string; role: string };
+type Team = { id: string; name: string };
 type MessageData = {
   id: string;
   subject: string;
   body: string;
   toRole: string | null;
+  teamId: string | null;
   readAt: string | null;
   createdAt: string;
   sender: User;
   recipient?: User | null;
+  team?: Team | null;
   replies: Array<{ id: string; body: string; createdAt: string; sender: User }>;
 };
 
@@ -34,6 +36,7 @@ interface Props {
   inbox: MessageData[];
   sent: MessageData[];
   companyUsers: User[];
+  availableTeams: Team[];
   currentUserId: string;
   currentUserRole: string;
 }
@@ -44,12 +47,39 @@ const ROLE_LABELS: Record<string, string> = {
   EMPLOYEE: "All Employees",
 };
 
-export function MessagesClient({ inbox, sent, companyUsers, currentUserId, currentUserRole }: Props) {
+type RecipientType = "user" | "role" | "team";
+
+interface ComposeForm {
+  recipientType: RecipientType;
+  recipientId: string;
+  toRole: string;
+  toTeamId: string;
+  subject: string;
+  body: string;
+}
+
+const DEFAULT_FORM: ComposeForm = {
+  recipientType: "user",
+  recipientId: "",
+  toRole: "",
+  toTeamId: "",
+  subject: "",
+  body: "",
+};
+
+export function MessagesClient({
+  inbox,
+  sent,
+  companyUsers,
+  availableTeams,
+  currentUserId,
+  currentUserRole,
+}: Props) {
   const router = useRouter();
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: string; subject: string } | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [form, setForm] = useState({ recipientType: "user", recipientId: "", toRole: "", subject: "", body: "" });
+  const [form, setForm] = useState<ComposeForm>(DEFAULT_FORM);
   const [replyBody, setReplyBody] = useState("");
 
   const { execute: send, isPending: sending } = useAction(sendMessage, {
@@ -57,7 +87,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
       toast.success("Message sent");
       setComposeOpen(false);
       setReplyTo(null);
-      setForm({ recipientType: "user", recipientId: "", toRole: "", subject: "", body: "" });
+      setForm(DEFAULT_FORM);
       setReplyBody("");
       router.refresh();
     },
@@ -82,6 +112,7 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
       send({
         recipientId: form.recipientType === "user" ? form.recipientId || undefined : undefined,
         toRole: form.recipientType === "role" ? form.toRole || undefined : undefined,
+        teamId: form.recipientType === "team" ? form.toTeamId || undefined : undefined,
         subject: form.subject,
         body: form.body,
       });
@@ -95,24 +126,39 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
     }
   }
 
+  function getRecipientLabel(msg: MessageData, showRecipient: boolean): string {
+    if (showRecipient) {
+      if (msg.recipient?.name) return `To: ${msg.recipient.name}`;
+      if (msg.team?.name) return `To team: ${msg.team.name}`;
+      if (msg.toRole) return `To: ${ROLE_LABELS[msg.toRole] ?? msg.toRole}`;
+      return "To: —";
+    }
+    return `From: ${msg.sender.name ?? msg.sender.email}`;
+  }
+
+  function isSendDisabled(): boolean {
+    if (sending) return true;
+    if (replyTo) return !replyBody.trim();
+    if (!form.subject.trim() || !form.body.trim()) return true;
+    if (form.recipientType === "user") return !form.recipientId;
+    if (form.recipientType === "role") return !form.toRole;
+    if (form.recipientType === "team") return !form.toTeamId;
+    return false;
+  }
+
   function MessageCard({ msg, showRecipient }: { msg: MessageData; showRecipient?: boolean }) {
     const isUnread = !msg.readAt && msg.sender.id !== currentUserId;
     const isOpen = expanded === msg.id;
     return (
       <div className={`rounded-lg border transition-all ${isUnread ? "border-primary/50 bg-primary/5" : "bg-card"}`}>
-        <button
-          className="w-full text-left p-3 flex items-start gap-3"
-          onClick={() => openMessage(msg)}
-        >
+        <button className="w-full text-left p-3 flex items-start gap-3" onClick={() => openMessage(msg)}>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {isUnread && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
               <span className={`text-sm ${isUnread ? "font-semibold" : "font-medium"} truncate`}>{msg.subject}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {showRecipient
-                ? `To: ${msg.recipient?.name ?? (msg.toRole ? ROLE_LABELS[msg.toRole] ?? msg.toRole : "—")}`
-                : `From: ${msg.sender.name}`}
+              {getRecipientLabel(msg, !!showRecipient)}
               {" · "}{format(new Date(msg.createdAt), "MMM d, h:mm a")}
               {msg.replies.length > 0 && ` · ${msg.replies.length} repl${msg.replies.length === 1 ? "y" : "ies"}`}
             </p>
@@ -122,7 +168,6 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
         {isOpen && (
           <div className="px-3 pb-3 space-y-3 border-t pt-3">
             <div className="text-sm whitespace-pre-wrap">{msg.body}</div>
-
             {msg.replies.length > 0 && (
               <div className="space-y-2 border-l-2 border-muted pl-3">
                 {msg.replies.map((r) => (
@@ -135,7 +180,6 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 ))}
               </div>
             )}
-
             <div className="flex items-center gap-2 pt-1">
               <Button
                 size="sm"
@@ -145,7 +189,12 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <Reply className="h-3 w-3 mr-1" />Reply
               </Button>
               {msg.sender.id === currentUserId && (
-                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => del({ messageId: msg.id })}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => del({ messageId: msg.id })}
+                >
                   <Trash2 className="h-3 w-3 mr-1" />Delete
                 </Button>
               )}
@@ -156,17 +205,29 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
     );
   }
 
-  const availableRoles = ["CEO", "DEPT_HEAD", "EMPLOYEE"].filter(r => r !== currentUserRole);
+  const unreadCount = inbox.filter((m) => !m.readAt && m.sender.id !== currentUserId).length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>
-          <p className="text-muted-foreground text-sm mt-1">Internal team communication · messages auto-delete after 48 hours</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Internal communication · messages auto-delete after 48 hours
+          </p>
         </div>
-        <Dialog open={composeOpen} onOpenChange={(o) => { setComposeOpen(o); if (!o) setReplyTo(null); }}>
-          <DialogTrigger render={<Button><Plus className="h-4 w-4 mr-1" />Compose</Button>} />
+        <Dialog
+          open={composeOpen}
+          onOpenChange={(o) => {
+            setComposeOpen(o);
+            if (!o) { setReplyTo(null); setForm(DEFAULT_FORM); setReplyBody(""); }
+          }}
+        >
+          <DialogTrigger render={
+            <Button>
+              <Plus className="h-4 w-4 mr-1" />Compose
+            </Button>
+          } />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{replyTo ? `Reply to: ${replyTo.subject}` : "New Message"}</DialogTitle>
@@ -176,37 +237,68 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <>
                   <div className="space-y-1">
                     <Label>Send To</Label>
-                    <Select value={form.recipientType} onValueChange={v => setForm(p => ({ ...p, recipientType: String(v || "user"), recipientId: "", toRole: "" }))}>
+                    <Select
+                      value={form.recipientType}
+                      onValueChange={(v) =>
+                        setForm((p) => ({
+                          ...p,
+                          recipientType: (v as RecipientType) || "user",
+                          recipientId: "",
+                          toRole: "",
+                          toTeamId: "",
+                        }))
+                      }
+                    >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user" label="Specific person">Specific person</SelectItem>
                         <SelectItem value="role" label="All users in a role">All users in a role</SelectItem>
+                        {availableTeams.length > 0 && (
+                          <SelectItem value="team" label="A team">A team</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {form.recipientType === "user" ? (
+                  {form.recipientType === "user" && (
                     <div className="space-y-1">
                       <Label>Recipient</Label>
-                      <Select onValueChange={v => setForm(p => ({ ...p, recipientId: String(v || "") }))}>
+                      <Select onValueChange={(v) => setForm((p) => ({ ...p, recipientId: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
                         <SelectContent>
-                          {companyUsers.map(u => (
-                            <SelectItem key={u.id} value={u.id} label={`${u.name} (${u.email})`}>
-                              {u.name} <span className="text-muted-foreground text-xs">({u.email})</span>
+                          {companyUsers.map((u) => (
+                            <SelectItem key={u.id} value={u.id} label={`${u.name ?? u.email} (${u.email})`}>
+                              <span className="font-medium">{u.name ?? u.email}</span>
+                              <span className="text-muted-foreground text-xs ml-1">({u.email})</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  ) : (
+                  )}
+
+                  {form.recipientType === "role" && (
                     <div className="space-y-1">
                       <Label>Broadcast to Role</Label>
-                      <Select onValueChange={v => setForm(p => ({ ...p, toRole: String(v || "") }))}>
+                      <Select onValueChange={(v) => setForm((p) => ({ ...p, toRole: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                         <SelectContent>
-                          {["CEO", "DEPT_HEAD", "EMPLOYEE"].map(r => (
+                          {["CEO", "DEPT_HEAD", "EMPLOYEE"].map((r) => (
                             <SelectItem key={r} value={r} label={ROLE_LABELS[r]}>{ROLE_LABELS[r]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {form.recipientType === "team" && (
+                    <div className="space-y-1">
+                      <Label>Broadcast to Team</Label>
+                      <Select onValueChange={(v) => setForm((p) => ({ ...p, toTeamId: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
+                        <SelectContent>
+                          {availableTeams.map((t) => (
+                            <SelectItem key={t.id} value={t.id} label={t.name}>{t.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -215,7 +307,12 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
 
                   <div className="space-y-1">
                     <Label>Subject</Label>
-                    <Input value={form.subject} onChange={e => setForm(p => ({ ...p, subject: e.target.value }))} placeholder="Message subject" required />
+                    <Input
+                      value={form.subject}
+                      onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
+                      placeholder="Message subject"
+                      required
+                    />
                   </div>
                 </>
               )}
@@ -224,18 +321,18 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <Label>Message</Label>
                 <Textarea
                   value={replyTo ? replyBody : form.body}
-                  onChange={e => replyTo ? setReplyBody(e.target.value) : setForm(p => ({ ...p, body: e.target.value }))}
+                  onChange={(e) =>
+                    replyTo
+                      ? setReplyBody(e.target.value)
+                      : setForm((p) => ({ ...p, body: e.target.value }))
+                  }
                   placeholder="Write your message..."
                   rows={5}
                   required
                 />
               </div>
 
-              <Button
-                type="submit"
-                disabled={sending || (!replyTo && !form.subject) || (!replyTo && form.recipientType === "user" && !form.recipientId) || (!replyTo && form.recipientType === "role" && !form.toRole)}
-                className="w-full"
-              >
+              <Button type="submit" disabled={isSendDisabled()} className="w-full">
                 {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Send className="mr-2 h-4 w-4" />
                 {replyTo ? "Send Reply" : "Send Message"}
@@ -250,9 +347,9 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
           <TabsTrigger value="inbox">
             <Inbox className="h-3.5 w-3.5 mr-1" />
             Inbox
-            {inbox.filter(m => !m.readAt && m.sender.id !== currentUserId).length > 0 && (
+            {unreadCount > 0 && (
               <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-medium">
-                {inbox.filter(m => !m.readAt && m.sender.id !== currentUserId).length}
+                {unreadCount}
               </span>
             )}
           </TabsTrigger>
@@ -269,7 +366,9 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <p>No messages yet</p>
               </CardContent>
             </Card>
-          ) : inbox.map(msg => <MessageCard key={msg.id} msg={msg} />)}
+          ) : (
+            inbox.map((msg) => <MessageCard key={msg.id} msg={msg} />)
+          )}
         </TabsContent>
 
         <TabsContent value="sent" className="mt-4 space-y-2">
@@ -280,7 +379,9 @@ export function MessagesClient({ inbox, sent, companyUsers, currentUserId, curre
                 <p>No sent messages</p>
               </CardContent>
             </Card>
-          ) : sent.map(msg => <MessageCard key={msg.id} msg={msg} showRecipient />)}
+          ) : (
+            sent.map((msg) => <MessageCard key={msg.id} msg={msg} showRecipient />)
+          )}
         </TabsContent>
       </Tabs>
     </div>

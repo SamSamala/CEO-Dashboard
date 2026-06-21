@@ -11,56 +11,80 @@ export default async function MessagesPage() {
 
   const { id: userId, companyId, role } = session.user;
 
-  // Fetch inbox: messages sent directly to me OR broadcast to my role
-  const inbox = await prisma.message.findMany({
-    where: {
-      companyId,
-      parentId: null, // top-level threads only
-      OR: [
-        { recipientId: userId },
-        { toRole: role },
-      ],
-    },
-    include: {
-      sender: { select: { id: true, name: true, email: true, role: true } },
-      replies: {
-        include: {
-          sender: { select: { id: true, name: true, email: true, role: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
+  // Get the user's teamId from DB (not in JWT since it can change)
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { teamId: true },
   });
+  const userTeamId = dbUser?.teamId ?? null;
 
-  // Fetch sent messages (top-level only)
-  const sent = await prisma.message.findMany({
-    where: { companyId, senderId: userId, parentId: null },
-    include: {
-      sender: { select: { id: true, name: true, email: true, role: true } },
-      recipient: { select: { id: true, name: true, email: true, role: true } },
-      replies: {
-        include: {
-          sender: { select: { id: true, name: true, email: true, role: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // Fetch inbox: direct + role broadcast + team broadcast
+  const inboxWhere = {
+    companyId,
+    parentId: null,
+    OR: [
+      { recipientId: userId },
+      { toRole: role },
+      ...(userTeamId ? [{ teamId: userTeamId }] : []),
+    ],
+  } as const;
 
-  // Fetch all users in the company to populate the recipient picker
-  const companyUsers = await prisma.user.findMany({
-    where: { companyId, isActive: true, id: { not: userId } },
-    select: { id: true, name: true, email: true, role: true },
-    orderBy: [{ role: "asc" }, { name: "asc" }],
-  });
+  const [inbox, sent, companyUsers, userTeams] = await Promise.all([
+    prisma.message.findMany({
+      where: inboxWhere as any,
+      include: {
+        sender: { select: { id: true, name: true, email: true, role: true } },
+        team: { select: { id: true, name: true } },
+        replies: {
+          include: {
+            sender: { select: { id: true, name: true, email: true, role: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.message.findMany({
+      where: { companyId, senderId: userId, parentId: null },
+      include: {
+        sender: { select: { id: true, name: true, email: true, role: true } },
+        recipient: { select: { id: true, name: true, email: true, role: true } },
+        team: { select: { id: true, name: true } },
+        replies: {
+          include: {
+            sender: { select: { id: true, name: true, email: true, role: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: { companyId, isActive: true, id: { not: userId } },
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: [{ role: "asc" }, { name: "asc" }],
+    }),
+    // Teams available to this user (CEO/DEPT_HEAD see all, others see own team)
+    role === "CEO" || role === "DEPT_HEAD"
+      ? prisma.team.findMany({
+          where: { companyId, isActive: true },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : userTeamId
+        ? prisma.team.findMany({
+            where: { id: userTeamId },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+  ]);
 
   return (
     <MessagesClient
       inbox={inbox as any}
       sent={sent as any}
       companyUsers={companyUsers}
+      availableTeams={userTeams}
       currentUserId={userId}
       currentUserRole={role}
     />

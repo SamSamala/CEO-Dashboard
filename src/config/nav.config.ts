@@ -76,6 +76,12 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["CEO", "DEPT_HEAD", "EMPLOYEE"],
         badge: "messages",
       },
+      {
+        label: "Organization",
+        href: "/org",
+        icon: "Network",
+        roles: ["CEO", "DEPT_HEAD"],
+      },
     ],
   },
   {
