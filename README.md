@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CEO Business Operating System
 
-## Getting Started
+A complete business operating system for founders and their teams. Track KPIs, manage approvals, monitor department health, detect bottlenecks, and run your entire company from one dashboard.
 
-First, run the development server:
+## Deploy in 3 clicks (no technical setup)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SamSamala/CEO-Dashboard&integration-ids=oac_VqOgBeIsaFoFT82b&env=NEXTAUTH_SECRET&envDescription=Click+Generate+next+to+NEXTAUTH_SECRET&project-name=my-business-os&repository-name=business-os)
+
+1. Click the button above and log in to Vercel
+2. Click **Add Neon Database** (free Postgres — auto-configured)
+3. Click **Generate** next to `NEXTAUTH_SECRET`, then **Deploy**
+4. Visit your URL → Create Account → Follow the setup wizard
+
+That's it. No terminal, no config files, no database setup.
+
+## Add your team
+
+Once you're logged in as CEO:
+
+1. Go to **Settings → Roles & Permissions** to create roles for your team
+2. Go to **Settings → User Management → Add Employees** to create accounts
+3. Share your app URL with employees — they log in from any device, anywhere
+
+## What it includes
+
+- CEO executive dashboard with health score, bottleneck detection, action items
+- Department KPI tracking (submit metrics, see trends, compare to targets)
+- Approval workflows with configurable thresholds
+- Hiring pipeline with candidate tracking
+- Budget allocation and expense tracking
+- Goal management (OKRs)
+- Custom role system with granular permissions
+- Employee account management (hire, fire, suspend with notes)
+- Audit log of every action
+- Data import from CSV/Excel
+- Automated alerts and reports
+
+## Running locally
 
 ```bash
+# 1. Copy the env file and fill in your database URL
+cp .env.example .env
+
+# 2. Install and start
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The build command (`npm run build`) automatically runs database migrations — no manual setup needed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+After running `npx tsx prisma/seed.ts`:
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Role | Email | Password |
+|---|---|---|
+| CEO | ceo@acme.com | password123 |
+| Marketing Head | mike@acme.com | password123 |
+| Sales Head | lisa@acme.com | password123 |

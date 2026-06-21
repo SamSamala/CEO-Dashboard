@@ -1,0 +1,724 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CEO
+  DEPT_HEAD
+  EMPLOYEE
+}
+
+enum ApprovalType {
+  BUDGET_REQUEST
+  HIRING_REQUEST
+  EXPENSE_APPROVAL
+  CUSTOM
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+}
+
+enum HiringPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum HiringStatus {
+  PENDING_APPROVAL
+  APPROVED
+  ACTIVE
+  FILLED
+  CANCELLED
+}
+
+enum CandidateStage {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum GoalType {
+  COMPANY
+  DEPARTMENT
+  QUARTERLY
+  ANNUAL
+}
+
+enum GoalStatus {
+  ON_TRACK
+  AT_RISK
+  BEHIND
+  COMPLETED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum BottleneckSeverity {
+  NONE
+  WARNING
+  CRITICAL
+}
+
+enum BottleneckTrend {
+  IMPROVING
+  STABLE
+  WORSENING
+}
+
+enum ReportPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  RESIGNED
+  TERMINATED
+}
+
+// ─── COMPANY ─────────────────────────────────────────────────────────────────
+
+model Company {
+  id                   String   @id @default(cuid())
+  name                 String
+  slug                 String   @unique
+  logoUrl              String?
+  industry             String?
+  fiscalYearEnd        Int      @default(12)
+  currency             String   @default("USD")
+  timezone             String   @default("America/New_York")
+  deptHeadApprovalLimit Float   @default(500)
+  onboardingCompleted  Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  users                   User[]
+  departments             Department[]
+  goals                   Goal[]
+  approvals               Approval[]
+  alerts                  Alert[]
+  alertRules              AlertRule[]
+  reports                 Report[]
+  budgetAllocations       BudgetAllocation[]
+  expenses                Expense[]
+  hiringRequests          HiringRequest[]
+  employees               Employee[]
+  bottlenecks             Bottleneck[]
+  importMappings          ImportMappingTemplate[]
+  importJobs              ImportJob[]
+  kpiConfigs              KpiConfig[]
+  metricEntries           MetricEntry[]
+  auditLogs               AuditLog[]
+  departmentRelationships DepartmentRelationship[]
+  customRoles             CustomRole[]
+
+  @@index([slug])
+}
+
+// ─── CUSTOM ROLES ─────────────────────────────────────────────────────────────
+
+model CustomRole {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  description String?
+  permissions String[]
+  color       String   @default("#6366f1")
+  isProtected Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users   User[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  companyId          String
+  name               String
+  email              String
+  emailVerified      DateTime?
+  image              String?
+  password           String?
+  role               UserRole  @default(EMPLOYEE)
+  roleVersion        Int       @default(0)
+  customRoleId       String?
+  employeeId         String?
+  departmentId       String?
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  terminationNote    String?   @db.Text
+  terminatedAt       DateTime?
+  terminatedBy       String?
+  terminationReason  String?
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  company            Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department         Department? @relation(fields: [departmentId], references: [id])
+  customRole         CustomRole? @relation(fields: [customRoleId], references: [id])
+  accounts           Account[]
+  sessions           Session[]
+  approvalDecisions  ApprovalDecision[]
+  submittedApprovals Approval[]         @relation("ApprovalSubmitter")
+  auditLogs          AuditLog[]
+  ownedGoals         Goal[]             @relation("GoalOwner")
+  metricEntries      MetricEntry[]      @relation("MetricEntrySubmitter")
+
+  @@unique([companyId, email])
+  @@unique([companyId, employeeId])
+  @@index([companyId, role])
+  @@index([companyId, departmentId])
+  @@index([companyId, customRoleId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── DEPARTMENTS ─────────────────────────────────────────────────────────────
+
+model Department {
+  id          String   @id @default(cuid())
+  companyId   String
+  slug        String
+  name        String
+  description String?
+  headId      String?
+  colorHex    String   @default("#6366f1")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company           Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users             User[]
+  employees         Employee[]
+  metricEntries     MetricEntry[]
+  kpiConfigs        KpiConfig[]
+  goals             Goal[]
+  budgetAllocations BudgetAllocation[]
+  expenses          Expense[]
+  hiringRequests    HiringRequest[]
+  bottlenecks       Bottleneck[]
+  approvals         Approval[]
+  fromRelationships DepartmentRelationship[] @relation("RelFrom")
+  toRelationships   DepartmentRelationship[] @relation("RelTo")
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+}
+
+// ─── DEPARTMENT RELATIONSHIPS (for bottleneck chain detection) ────────────────
+
+model DepartmentRelationship {
+  id               String @id @default(cuid())
+  companyId        String
+  fromDepartmentId String
+  toDepartmentId   String
+  fromKpiKey       String
+  toKpiKey         String
+  sortOrder        Int    @default(0)
+
+  company        Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fromDepartment Department @relation("RelFrom", fields: [fromDepartmentId], references: [id], onDelete: Cascade)
+  toDepartment   Department @relation("RelTo", fields: [toDepartmentId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, fromDepartmentId, toDepartmentId])
+  @@index([companyId])
+}
+
+// ─── METRICS ENGINE ──────────────────────────────────────────────────────────
+
+model KpiConfig {
+  id                String   @id @default(cuid())
+  companyId         String
+  departmentId      String
+  key               String
+  label             String
+  unit              String   @default("count")
+  targetValue       Float    @default(0)
+  warningThreshold  Float    @default(0.75)
+  criticalThreshold Float    @default(0.50)
+  weight            Float    @default(1.0)
+  isBottleneckKpi   Boolean  @default(false)
+  linkedKpiId       String?
+  aggregation       String   @default("sum")
+  frequency         String   @default("DAILY")
+  ownerId           String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  linkedKpi  KpiConfig? @relation("KpiLinks", fields: [linkedKpiId], references: [id])
+  linkedBy   KpiConfig[] @relation("KpiLinks")
+
+  @@unique([companyId, departmentId, key])
+  @@index([companyId, departmentId])
+}
+
+model MetricEntry {
+  id           String   @id @default(cuid())
+  companyId    String
+  departmentId String
+  submittedBy  String
+  businessDate DateTime @db.Date
+  label        String?
+  data         Json
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  submitter  User       @relation("MetricEntrySubmitter", fields: [submittedBy], references: [id])
+
+  @@index([companyId, departmentId, businessDate])
+  @@index([companyId, businessDate])
+}
+
+// ─── APPROVALS ───────────────────────────────────────────────────────────────
+
+model Approval {
+  id              String         @id @default(cuid())
+  companyId       String
+  departmentId    String
+  submittedBy     String
+  type            ApprovalType
+  title           String
+  description     String         @db.Text
+  requestedAmount Float?
+  approvedAmount  Float?
+  metadata        Json?
+  status          ApprovalStatus @default(PENDING)
+  priority        Int            @default(0)
+  dueDate         DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  company       Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department    Department         @relation(fields: [departmentId], references: [id])
+  submitter     User               @relation("ApprovalSubmitter", fields: [submittedBy], references: [id])
+  decisions     ApprovalDecision[]
+  attachments   Attachment[]
+  hiringRequest HiringRequest?
+
+  @@index([companyId, status])
+  @@index([companyId, departmentId, status])
+  @@index([companyId, createdAt])
+}
+
+model ApprovalDecision {
+  id             String         @id @default(cuid())
+  approvalId     String
+  decidedBy      String
+  status         ApprovalStatus
+  approvedAmount Float?
+  reason         String?        @db.Text
+  decidedAt      DateTime       @default(now())
+
+  approval Approval @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  decider  User     @relation(fields: [decidedBy], references: [id])
+
+  @@index([approvalId])
+}
+
+// ─── BUDGET & SPENDING ───────────────────────────────────────────────────────
+
+model BudgetAllocation {
+  id           String   @id @default(cuid())
+  companyId    String
+  departmentId String
+  approvalId   String?
+  period       String
+  amount       Float
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@index([companyId, departmentId, period])
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  companyId    String
+  departmentId String
+  submittedBy  String
+  amount       Float
+  category     String
+  description  String
+  date         DateTime @db.Date
+  period       String
+  vendorName   String?
+  receiptUrl   String?
+  isApproved   Boolean  @default(false)
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department  Department   @relation(fields: [departmentId], references: [id])
+  attachments Attachment[]
+
+  @@index([companyId, departmentId, period])
+  @@index([companyId, period])
+  @@index([companyId, date])
+}
+
+// ─── HIRING ──────────────────────────────────────────────────────────────────
+
+model HiringRequest {
+  id              String         @id @default(cuid())
+  companyId       String
+  departmentId    String
+  approvalId      String?        @unique
+  jobTitle        String
+  jobDescription  String?        @db.Text
+  reason          String         @db.Text
+  priority        HiringPriority @default(MEDIUM)
+  salaryMin       Float?
+  salaryMax       Float?
+  targetStartDate DateTime?
+  status          HiringStatus   @default(PENDING_APPROVAL)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  approval   Approval?  @relation(fields: [approvalId], references: [id])
+  candidates Candidate[]
+
+  @@index([companyId, departmentId])
+  @@index([companyId, status])
+}
+
+model Candidate {
+  id                String         @id @default(cuid())
+  hiringRequestId   String
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  currentStage      CandidateStage @default(APPLIED)
+  resumeUrl         String?
+  notes             String?        @db.Text
+  source            String?
+  salaryExpectation Float?
+  offerAmount       Float?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  hiringRequest HiringRequest          @relation(fields: [hiringRequestId], references: [id], onDelete: Cascade)
+  stageHistory  CandidateStageHistory[]
+
+  @@index([hiringRequestId, currentStage])
+}
+
+model CandidateStageHistory {
+  id          String          @id @default(cuid())
+  candidateId String
+  fromStage   CandidateStage?
+  toStage     CandidateStage
+  changedBy   String
+  notes       String?
+  changedAt   DateTime        @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+// ─── EMPLOYEES ───────────────────────────────────────────────────────────────
+
+model Employee {
+  id                String           @id @default(cuid())
+  companyId         String
+  departmentId      String?
+  userId            String?          @unique
+  firstName         String
+  lastName          String
+  email             String
+  jobTitle          String?
+  employmentStatus  EmploymentStatus @default(ACTIVE)
+  startDate         DateTime?        @db.Date
+  endDate           DateTime?        @db.Date
+  salary            Float?
+  utilizationTarget Float            @default(0.80)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([companyId, departmentId, employmentStatus])
+}
+
+// ─── GOALS ───────────────────────────────────────────────────────────────────
+
+model Goal {
+  id           String     @id @default(cuid())
+  companyId    String
+  departmentId String?
+  parentGoalId String?
+  ownerId      String
+  type         GoalType
+  status       GoalStatus @default(ON_TRACK)
+  title        String
+  description  String?    @db.Text
+  targetValue  Float
+  currentValue Float      @default(0)
+  unit         String     @default("percentage")
+  startDate    DateTime
+  dueDate      DateTime
+  isArchived   Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id])
+  owner      User        @relation("GoalOwner", fields: [ownerId], references: [id])
+  parent     Goal?       @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
+  children   Goal[]      @relation("GoalHierarchy")
+
+  @@index([companyId, type])
+  @@index([companyId, departmentId])
+}
+
+// ─── BOTTLENECK ENGINE ───────────────────────────────────────────────────────
+
+model Bottleneck {
+  id                    String             @id @default(cuid())
+  companyId             String
+  departmentId          String
+  kpiKey                String
+  severity              BottleneckSeverity @default(WARNING)
+  severityScore         Float
+  actualValue           Float
+  expectedValue         Float
+  trend                 BottleneckTrend    @default(STABLE)
+  investigationArea     String?
+  linkedDeptId          String?
+  estimatedRevenueImpact Float?
+  isPrimaryConstraint   Boolean            @default(false)
+  detectedAt            DateTime           @default(now())
+  resolvedAt            DateTime?
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@index([companyId, resolvedAt])
+  @@index([companyId, severity, resolvedAt])
+}
+
+// ─── ALERTS ──────────────────────────────────────────────────────────────────
+
+model AlertRule {
+  id            String   @id @default(cuid())
+  companyId     String
+  name          String
+  description   String?
+  ruleType      String
+  threshold     Float?
+  thresholdUnit String?
+  departmentId  String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  triggers Alert[]
+
+  @@index([companyId, isActive])
+}
+
+model Alert {
+  id             String        @id @default(cuid())
+  companyId      String
+  alertRuleId    String?
+  title          String
+  message        String        @db.Text
+  severity       AlertSeverity @default(WARNING)
+  status         AlertStatus   @default(ACTIVE)
+  metadata       Json?
+  triggeredAt    DateTime      @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  alertRule AlertRule? @relation(fields: [alertRuleId], references: [id])
+
+  @@index([companyId, status, triggeredAt])
+  @@index([companyId, severity, status])
+}
+
+// ─── REPORTS ─────────────────────────────────────────────────────────────────
+
+model Report {
+  id          String       @id @default(cuid())
+  companyId   String
+  period      ReportPeriod
+  periodKey   String
+  title       String
+  content     Json
+  generatedAt DateTime     @default(now())
+  exportUrl   String?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, period, periodKey])
+  @@index([companyId, period, generatedAt])
+}
+
+// ─── DATA IMPORT ─────────────────────────────────────────────────────────────
+
+model ImportMappingTemplate {
+  id           String   @id @default(cuid())
+  companyId    String
+  name         String
+  description  String?
+  sourceType   String
+  departmentId String?
+  mapping      Json
+  transforms   Json?
+  isPublic     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, departmentId])
+}
+
+model ImportJob {
+  id           String    @id @default(cuid())
+  companyId    String
+  submittedBy  String
+  templateId   String?
+  departmentId String
+  filename     String
+  fileUrl      String
+  status       String    @default("PENDING")
+  rowsTotal    Int       @default(0)
+  rowsImported Int       @default(0)
+  rowsFailed   Int       @default(0)
+  errors       Json?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+}
+
+// ─── SUPPORTING ──────────────────────────────────────────────────────────────
+
+model Attachment {
+  id         String   @id @default(cuid())
+  companyId  String
+  uploadedBy String
+  url        String
+  filename   String
+  mimeType   String
+  sizeBytes  Int
+  approvalId String?
+  expenseId  String?
+  createdAt  DateTime @default(now())
+
+  approval Approval? @relation(fields: [approvalId], references: [id])
+  expense  Expense?  @relation(fields: [expenseId], references: [id])
+
+  @@index([approvalId])
+  @@index([expenseId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  companyId  String
+  userId     String
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([companyId, entityType, entityId])
+  @@index([companyId, userId])
+  @@index([companyId, createdAt])
+}

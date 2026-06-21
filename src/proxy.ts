@@ -1,0 +1,32 @@
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+const CEO_ONLY_PATHS = ["/approvals", "/budget", "/settings", "/alerts"];
+const AUTH_PATHS = ["/login", "/register"];
+
+export default auth((req) => {
+  const { nextUrl, auth: session } = req;
+  const path = nextUrl.pathname;
+
+  const isLoggedIn = !!session?.user;
+  const isAuthPage = AUTH_PATHS.some((p) => path.startsWith(p));
+  const isCeoOnly = CEO_ONLY_PATHS.some((p) => path.startsWith(p));
+
+  if (!isLoggedIn && !isAuthPage && !path.startsWith("/api")) {
+    return NextResponse.redirect(new URL("/login", nextUrl));
+  }
+
+  if (isLoggedIn && isAuthPage) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  }
+
+  if (isLoggedIn && isCeoOnly && session?.user?.role !== "CEO") {
+    return NextResponse.redirect(new URL("/departments", nextUrl));
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)"],
+};
