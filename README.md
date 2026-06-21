@@ -4,14 +4,16 @@ A complete business operating system for founders and their teams. Track KPIs, m
 
 ## Deploy in 3 clicks (no technical setup)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SamSamala/CEO-Dashboard&integration-ids=oac_VqOgBeIsaFoFT82b&env=NEXTAUTH_SECRET&envDescription=Click+Generate+next+to+NEXTAUTH_SECRET&project-name=my-business-os&repository-name=business-os)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SamSamala/CEO-Dashboard&env=DATABASE_URL,NEXTAUTH_SECRET&envDescription=DATABASE_URL%3A+Get+a+free+connection+string+from+neon.tech+%7C+NEXTAUTH_SECRET%3A+Any+random+string+of+40%2B+characters&envLink=https%3A%2F%2Fneon.tech&project-name=my-business-os&repository-name=business-os)
 
 1. Click the button above and log in to Vercel
-2. Click **Add Neon Database** (free Postgres — auto-configured)
-3. Click **Generate** next to `NEXTAUTH_SECRET`, then **Deploy**
-4. Visit your URL → Create Account → Follow the setup wizard
+2. You'll be asked for two values:
+   - **DATABASE_URL** → Go to [neon.tech](https://neon.tech), sign up free, create a project, copy the connection string and paste it here
+   - **NEXTAUTH_SECRET** → Type any random string of 40+ characters (just smash your keyboard)
+3. Click **Deploy**
+4. Visit your URL → Register → Follow the setup wizard
 
-That's it. No terminal, no config files, no database setup.
+That's it. No terminal, no config files.
 
 ## Add your team
 
