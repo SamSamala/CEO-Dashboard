@@ -50,12 +50,3 @@ npm run dev
 
 The build command (`npm run build`) automatically runs database migrations — no manual setup needed.
 
-## Demo
-
-After running `npx tsx prisma/seed.ts`:
-
-| Role | Email | Password |
-|---|---|---|
-| CEO | ceo@acme.com | password123 |
-| Marketing Head | mike@acme.com | password123 |
-| Sales Head | lisa@acme.com | password123 |
