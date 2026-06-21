@@ -15,13 +15,22 @@ A complete business operating system for founders and their teams. Track KPIs, m
 
 That's it. No terminal, no config files.
 
-## Add your team
+## Step 1 — Create your CEO account
+
+After deployment, visit your app URL and go to **/register**.
+
+Fill in your name, email, and password. **The first account created is automatically the CEO account.** No configuration needed.
+
+After registering, log in and the setup wizard will guide you through setting up your company, choosing your industry, and configuring your departments.
+
+## Step 2 — Add your team
 
 Once you're logged in as CEO:
 
-1. Go to **Settings → Roles & Permissions** to create roles for your team
-2. Go to **Settings → User Management → Add Employees** to create accounts
-3. Share your app URL with employees — they log in from any device, anywhere
+1. Go to **Settings → Roles & Permissions** → create roles for your team (e.g. Marketing Manager, Sales Rep, HR Lead)
+2. Go to **Settings → User Management** → click **Add Employees** → enter their name and email
+3. Share your app URL with your team — they go to **/register** and sign up with the email you added
+4. They can log in from any device, any location, any network
 
 ## What it includes
 
