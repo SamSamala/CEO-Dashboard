@@ -123,7 +123,14 @@ export function DataImportClient({ departments, templates, recentJobs }: Props) 
           <Card>
             <CardHeader><CardTitle className="text-base">Step 2: Map Columns</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-muted-foreground">Map each source column to a standard metric field</p>
+              <p className="text-xs text-muted-foreground">
+                Map each CSV column to a metric field. At least one mapping is required to import.
+                {!mappings.some(m => m.targetKey) && (
+                  <span className="ml-1 text-amber-600 font-medium">
+                    No auto-matches found — select at least one mapping below to enable import.
+                  </span>
+                )}
+              </p>
               {mappings.map((m, i) => (
                 <div key={m.sourceColumn} className="flex items-center gap-3">
                   <div className="flex-1 text-sm font-medium">{m.sourceColumn}</div>
