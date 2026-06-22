@@ -18,20 +18,16 @@ export default async function MessagesPage() {
   });
   const userTeamId = dbUser?.teamId ?? null;
 
-  // Fetch inbox: direct + role broadcast + team broadcast
-  const inboxWhere = {
-    companyId,
-    parentId: null,
-    OR: [
-      { recipientId: userId },
-      { toRole: role },
-      ...(userTeamId ? [{ teamId: userTeamId }] : []),
-    ],
-  } as const;
+  // Build inbox OR conditions without spread
+  const inboxOrConditions: Array<{ recipientId?: string; toRole?: string; teamId?: string }> = [
+    { recipientId: userId },
+    { toRole: role },
+  ];
+  if (userTeamId) inboxOrConditions.push({ teamId: userTeamId });
 
   const [inbox, sent, companyUsers, userTeams] = await Promise.all([
     prisma.message.findMany({
-      where: inboxWhere as any,
+      where: { companyId, parentId: null, OR: inboxOrConditions },
       include: {
         sender: { select: { id: true, name: true, email: true, role: true } },
         team: { select: { id: true, name: true } },

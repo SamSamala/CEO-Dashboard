@@ -4,6 +4,8 @@ import { authActionClient } from "@/lib/safe-action";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
+import { logAudit } from "@/lib/audit.helper";
 
 const createHiringRequestSchema = z.object({
   departmentId: z.string(),
@@ -95,9 +97,9 @@ export const advanceCandidate = authActionClient
         },
       });
 
-      // Auto-create employee when hired
+      // Auto-create employee + user account when hired
       if (parsedInput.toStage === "HIRED") {
-        await tx.employee.create({
+        const employee = await tx.employee.create({
           data: {
             companyId: ctx.companyId,
             departmentId: candidate.hiringRequest.departmentId,
@@ -110,6 +112,52 @@ export const advanceCandidate = authActionClient
             employmentStatus: "ACTIVE",
           },
         });
+
+        // Create user account if the candidate has an email and no account exists yet
+        if (candidate.email) {
+          const emailLower = candidate.email.toLowerCase();
+          const existing = await tx.user.findFirst({
+            where: { companyId: ctx.companyId, email: emailLower },
+            select: { id: true },
+          });
+
+          if (existing) {
+            // Link existing user to the new employee record
+            await tx.employee.update({ where: { id: employee.id }, data: { userId: existing.id } });
+          } else {
+            // Default password = part of email before '@'
+            const defaultPassword = emailLower.split("@")[0];
+            const hash = await bcrypt.hash(defaultPassword, 12);
+
+            // Generate sequential employee ID (EMP-001 etc.)
+            const empCount = await tx.user.count({ where: { companyId: ctx.companyId, employeeId: { not: null } } });
+            const employeeId = `EMP-${String(empCount + 1).padStart(3, "0")}`;
+
+            const user = await tx.user.create({
+              data: {
+                companyId: ctx.companyId,
+                name: `${candidate.firstName} ${candidate.lastName}`,
+                email: emailLower,
+                password: hash,
+                role: "EMPLOYEE",
+                departmentId: candidate.hiringRequest.departmentId,
+                employeeId,
+                mustChangePassword: true,
+              },
+            });
+
+            await tx.employee.update({ where: { id: employee.id }, data: { userId: user.id } });
+
+            await logAudit(tx as any, {
+              companyId: ctx.companyId,
+              userId: ctx.userId,
+              action: "EMPLOYEE_HIRED",
+              entityType: "User",
+              entityId: user.id,
+              after: { name: user.name, email: user.email, employeeId },
+            });
+          }
+        }
 
         await tx.hiringRequest.update({
           where: { id: candidate.hiringRequestId },

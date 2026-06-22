@@ -268,8 +268,7 @@ export function MessagesClient({
                         <SelectContent>
                           {companyUsers.map((u) => (
                             <SelectItem key={u.id} value={u.id} label={`${u.name ?? u.email} (${u.email})`}>
-                              <span className="font-medium">{u.name ?? u.email}</span>
-                              <span className="text-muted-foreground text-xs ml-1">({u.email})</span>
+                              {`${u.name ?? u.email} — ${u.email}`}
                             </SelectItem>
                           ))}
                         </SelectContent>

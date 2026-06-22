@@ -15,10 +15,10 @@ export default async function AppLayout({
   const companyId = session.user.companyId;
   const userId = session.user.id;
 
-  // Verify account is still active (catches race conditions with deactivation)
+  // Single query — fetch all needed fields including teamId
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, terminationNote: true, mustChangePassword: true },
+    select: { isActive: true, terminationNote: true, mustChangePassword: true, teamId: true },
   });
 
   if (!dbUser?.isActive) {
@@ -42,11 +42,14 @@ export default async function AppLayout({
     redirect("/settings/password?forced=1");
   }
 
-  // Get user's teamId for unread team messages
-  const dbUserTeam = companyId
-    ? await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
-    : null;
-  const userTeamId = dbUserTeam?.teamId ?? null;
+  const userTeamId = dbUser?.teamId ?? null;
+
+  // Build message OR conditions without spread (spread in Prisma OR causes unreliable compiled queries)
+  const msgOrConditions: Array<{ recipientId?: string; toRole?: string; teamId?: string }> = [
+    { recipientId: userId },
+    { toRole: session.user.role },
+  ];
+  if (userTeamId) msgOrConditions.push({ teamId: userTeamId });
 
   const [pendingApprovals, activeAlerts, activeBottlenecks, unreadMessages] = await Promise.all([
     companyId
@@ -64,11 +67,7 @@ export default async function AppLayout({
             companyId,
             readAt: null,
             parentId: null,
-            OR: [
-              { recipientId: userId },
-              { toRole: session.user.role },
-              ...(userTeamId ? [{ teamId: userTeamId }] : []),
-            ],
+            OR: msgOrConditions,
             NOT: { senderId: userId },
           },
         })
