@@ -4,14 +4,20 @@ import { ArrowRight, AlertTriangle, TrendingDown, Clock, Target, Users, BarChart
 import type { ActionItem } from "@/types/dashboard.types";
 import { cn } from "@/lib/utils";
 
-const TYPE_CONFIG = {
-  PENDING_APPROVAL: { icon: Clock, label: "Approval", color: "text-amber-500" },
-  BOTTLENECK: { icon: AlertTriangle, label: "Bottleneck", color: "text-red-500" },
-  RUNWAY: { icon: TrendingDown, label: "Cash", color: "text-red-600" },
-  BUDGET: { icon: BarChart2, label: "Budget", color: "text-amber-500" },
-  HIRING: { icon: Users, label: "Hiring", color: "text-blue-500" },
-  GOAL: { icon: Target, label: "Goals", color: "text-purple-500" },
-  METRICS: { icon: Activity, label: "Metrics", color: "text-muted-foreground" },
+const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+  PENDING_APPROVAL:   { icon: Clock,          label: "Approval",    color: "text-amber-500" },
+  APPROVAL_ESCALATION:{ icon: Clock,          label: "Approval",    color: "text-red-500" },
+  BOTTLENECK:         { icon: AlertTriangle,  label: "Bottleneck",  color: "text-red-500" },
+  TEAM_RISK:          { icon: AlertTriangle,  label: "Team",        color: "text-orange-500" },
+  RUNWAY:             { icon: TrendingDown,   label: "Cash",        color: "text-red-600" },
+  BUDGET:             { icon: BarChart2,      label: "Budget",      color: "text-amber-500" },
+  BUDGET_OVERRUN:     { icon: BarChart2,      label: "Budget",      color: "text-red-600" },
+  HIRING:             { icon: Users,          label: "Hiring",      color: "text-blue-500" },
+  HIRING_STALLED:     { icon: Users,          label: "Hiring",      color: "text-amber-500" },
+  GOAL:               { icon: Target,         label: "Goals",       color: "text-purple-500" },
+  GOAL_DEADLINE:      { icon: Target,         label: "Goal",        color: "text-red-500" },
+  METRICS:            { icon: Activity,       label: "Metrics",     color: "text-muted-foreground" },
+  DATA_MISSING:       { icon: Activity,       label: "Data",        color: "text-muted-foreground" },
 };
 
 const PRIORITY_BADGE = {
@@ -38,7 +44,7 @@ export function ActionCenter({ items }: ActionCenterProps) {
   return (
     <div className="space-y-2">
       {items.map((item) => {
-        const config = TYPE_CONFIG[item.type];
+        const config = TYPE_CONFIG[item.type] ?? TYPE_CONFIG["METRICS"];
         const Icon = config.icon;
         return (
           <Link
