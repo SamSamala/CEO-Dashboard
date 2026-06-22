@@ -263,44 +263,50 @@ export function MessagesClient({
                   {form.recipientType === "user" && (
                     <div className="space-y-1">
                       <Label>Recipient</Label>
-                      <Select onValueChange={(v) => setForm((p) => ({ ...p, recipientId: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select person" /></SelectTrigger>
-                        <SelectContent>
-                          {companyUsers.map((u) => (
-                            <SelectItem key={u.id} value={u.id} label={`${u.name ?? u.email} (${u.email})`}>
-                              {`${u.name ?? u.email} — ${u.email}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={form.recipientId}
+                        onChange={(e) => setForm((p) => ({ ...p, recipientId: e.target.value }))}
+                        className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <option value="">Select person…</option>
+                        {companyUsers.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name ?? u.email} — {u.email}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
                   {form.recipientType === "role" && (
                     <div className="space-y-1">
                       <Label>Broadcast to Role</Label>
-                      <Select onValueChange={(v) => setForm((p) => ({ ...p, toRole: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-                        <SelectContent>
-                          {["CEO", "DEPT_HEAD", "EMPLOYEE"].map((r) => (
-                            <SelectItem key={r} value={r} label={ROLE_LABELS[r]}>{ROLE_LABELS[r]}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={form.toRole}
+                        onChange={(e) => setForm((p) => ({ ...p, toRole: e.target.value }))}
+                        className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <option value="">Select role…</option>
+                        {["CEO", "DEPT_HEAD", "EMPLOYEE"].map((r) => (
+                          <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
                   {form.recipientType === "team" && (
                     <div className="space-y-1">
                       <Label>Broadcast to Team</Label>
-                      <Select onValueChange={(v) => setForm((p) => ({ ...p, toTeamId: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
-                        <SelectContent>
-                          {availableTeams.map((t) => (
-                            <SelectItem key={t.id} value={t.id} label={t.name}>{t.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={form.toTeamId}
+                        onChange={(e) => setForm((p) => ({ ...p, toTeamId: e.target.value }))}
+                        className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <option value="">Select team…</option>
+                        {availableTeams.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
