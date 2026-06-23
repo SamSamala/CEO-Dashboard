@@ -19,7 +19,7 @@ export const sendMessage = authActionClient
   .metadata({ actionName: "sendMessage" })
   .schema(sendMessageSchema)
   .action(async ({ parsedInput, ctx }) => {
-    if (!parsedInput.recipientId && !parsedInput.toRole && !parsedInput.teamId) {
+    if (!parsedInput.parentId && !parsedInput.recipientId && !parsedInput.toRole && !parsedInput.teamId) {
       throw new Error("Specify a recipient, a role, or a team to broadcast to");
     }
 
