@@ -7,18 +7,23 @@ export const metadata = { title: "Approvals" };
 
 export default async function ApprovalsPage() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "CEO") redirect("/dashboard");
+  const role = session?.user?.role;
+  if (!session?.user || (role !== "CEO" && role !== "DEPT_HEAD")) redirect("/dashboard");
+
+  const companyId = session.user.companyId;
+  const deptFilter = role === "DEPT_HEAD" ? { departmentId: session.user.departmentId ?? "" } : {};
 
   const [pending, resolved] = await Promise.all([
     prisma.approval.findMany({
-      where: { companyId: session.user.companyId, status: "PENDING" },
+      where: { companyId, status: "PENDING", ...deptFilter },
       include: { department: true, submitter: { select: { name: true } } },
       orderBy: { createdAt: "asc" },
     }),
     prisma.approval.findMany({
       where: {
-        companyId: session.user.companyId,
+        companyId,
         status: { not: "PENDING" },
+        ...deptFilter,
       },
       include: { department: true, submitter: { select: { name: true } }, decisions: { include: { decider: { select: { name: true } } } } },
       orderBy: { updatedAt: "desc" },
