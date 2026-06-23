@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getExecutiveDashboardData, getFounderActionItems } from "@/server/queries/dashboard.queries";
@@ -11,6 +12,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/shared/loading-skeleton";
+import { EmployeeHome } from "@/components/employee/employee-home";
 import {
   DollarSign, Wallet, TrendingUp, Clock, Users, AlertTriangle, Flame
 } from "lucide-react";
@@ -21,11 +23,52 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const companyId = session.user.companyId;
+  const userId = session.user.id;
+
+  // EMPLOYEE: show personal info dashboard
+  if (session.user.role === "EMPLOYEE") {
+    const [userData, employeeRecord] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          department: {
+            include: {
+              director: { select: { id: true, name: true, email: true } },
+            },
+          },
+          teamMembership: {
+            include: {
+              leader: { select: { id: true, name: true, email: true } },
+              members: {
+                where: { isActive: true },
+                select: { id: true, name: true, email: true, role: true },
+                take: 30,
+              },
+            },
+          },
+        },
+      }),
+      prisma.employee.findFirst({
+        where: { userId },
+        select: { jobTitle: true, startDate: true },
+      }),
+    ]);
+
+    if (!userData) redirect("/login");
+
+    return (
+      <EmployeeHome
+        user={userData as any}
+        jobTitle={employeeRecord?.jobTitle ?? null}
+        startDate={employeeRecord?.startDate ?? null}
+      />
+    );
+  }
+
   if (session.user.role !== "CEO") {
     redirect("/departments");
   }
-
-  const companyId = session.user.companyId;
 
   return (
     <Suspense fallback={<DashboardSkeleton />}>
