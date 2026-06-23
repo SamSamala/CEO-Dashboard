@@ -19,11 +19,12 @@ export function GoalForm() {
   const [form, setForm] = useState({
     title: "", description: "", type: "QUARTERLY" as const,
     departmentId: "", targetValue: "", unit: "percentage",
-    startDate: format(new Date(), "yyyy-MM-dd"),
+    startDate: "",
     dueDate: "",
   });
 
   useEffect(() => {
+    setForm(p => ({ ...p, startDate: format(new Date(), "yyyy-MM-dd") }));
     fetch("/api/departments").then(r => r.json()).then(setDepartments).catch(() => {});
   }, []);
 
