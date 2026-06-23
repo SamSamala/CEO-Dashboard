@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { cn, formatCurrency } from "@/lib/utils";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Clock, AlertCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 type DeptBudget = {
   dept: { id: string; name: string; colorHex: string };
@@ -22,14 +23,24 @@ type DeptBudget = {
   utilization: number;
 };
 
+type PendingBudgetRequest = {
+  id: string;
+  title: string;
+  requestedAmount: number | null;
+  createdAt: Date;
+  department: { name: string };
+  submitter: { name: string };
+};
+
 interface Props {
   budgetData: DeptBudget[];
   period: string;
   totals: { allocated: number; spent: number; remaining: number };
   overallUtilization: number;
+  pendingBudgetRequests: PendingBudgetRequest[];
 }
 
-export function BudgetClient({ budgetData, period, totals, overallUtilization }: Props) {
+export function BudgetClient({ budgetData, period, totals, overallUtilization, pendingBudgetRequests }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<DeptBudget | null>(null);
@@ -86,6 +97,33 @@ export function BudgetClient({ budgetData, period, totals, overallUtilization }:
           </Card>
         ))}
       </div>
+
+      {pendingBudgetRequests.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              <Clock className="h-4 w-4" />
+              Pending Budget Requests ({pendingBudgetRequests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pendingBudgetRequests.map((req) => (
+              <div key={req.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-white/60 dark:bg-white/5 border border-amber-200/60">
+                <div>
+                  <p className="font-medium">{req.department.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {req.title} · by {req.submitter.name} · {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}
+                  </p>
+                </div>
+                <div className="text-right shrink-0 ml-4">
+                  <p className="font-semibold">{formatCurrency(req.requestedAmount ?? 0)}</p>
+                  <a href="/approvals" className="text-xs text-primary underline">Review in Approvals →</a>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

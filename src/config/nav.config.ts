@@ -49,7 +49,7 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Budget",
         href: "/budget",
         icon: "PieChart",
-        roles: ["CEO"],
+        roles: ["CEO", "DEPT_HEAD"],
       },
       {
         label: "Spending",

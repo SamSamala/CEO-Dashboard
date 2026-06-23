@@ -29,6 +29,29 @@ export const logExpense = authActionClient
     });
     if (!dept) throw new Error("Department not found");
 
+    // Require an approved budget allocation for this dept/period
+    const allocation = await prisma.budgetAllocation.findFirst({
+      where: { companyId: ctx.companyId, departmentId: parsedInput.departmentId, period },
+    });
+    if (!allocation) {
+      throw new Error(
+        `No approved budget for ${dept.name} this period. ` +
+        `A department head must submit a budget request via /budget that the CEO approves first.`
+      );
+    }
+
+    // Block if this expense would exceed remaining budget
+    const alreadySpent = await prisma.expense.aggregate({
+      where: { companyId: ctx.companyId, departmentId: parsedInput.departmentId, period },
+      _sum: { amount: true },
+    });
+    const remaining = allocation.amount - (alreadySpent._sum.amount ?? 0);
+    if (parsedInput.amount > remaining) {
+      throw new Error(
+        `Expense of $${parsedInput.amount.toFixed(2)} exceeds remaining budget of $${remaining.toFixed(2)} for ${dept.name}.`
+      );
+    }
+
     const expense = await prisma.expense.create({
       data: {
         companyId: ctx.companyId,
