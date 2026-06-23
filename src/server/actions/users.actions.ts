@@ -96,8 +96,8 @@ export const bulkCreateUsers = authActionClient
           email: userData.email.toLowerCase(),
           password: hash,
           role: "EMPLOYEE",
-          customRoleId: userData.customRoleId ?? null,
-          departmentId: userData.departmentId ?? null,
+          customRoleId: userData.customRoleId || null,
+          departmentId: userData.departmentId || null,
           employeeId,
           mustChangePassword: true, // force password change on first login
         },
