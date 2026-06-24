@@ -20,7 +20,8 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  if (isLoggedIn && isCeoOnly && session?.user?.role !== "CEO") {
+  // /settings/password is accessible by all roles (forced password change)
+  if (isLoggedIn && isCeoOnly && session?.user?.role !== "CEO" && !path.startsWith("/settings/password")) {
     return NextResponse.redirect(new URL("/departments", nextUrl));
   }
 
