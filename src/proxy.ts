@@ -24,7 +24,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/departments", nextUrl));
   }
 
-  return NextResponse.next();
+  // Inject current pathname as a header so server component layouts can read it
+  // via headers() — used to prevent mustChangePassword redirect loops.
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", path);
+  return response;
 });
 
 export const config = {
