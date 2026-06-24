@@ -3,7 +3,7 @@ import { computeCompanyHealthScore } from "@/server/services/health-score.servic
 import { computeDeptScorecard } from "@/server/services/kpi.service";
 import { getActiveBottlenecks } from "@/server/services/bottleneck.service";
 import type { ActionItem, DeptHealthScore } from "@/types/dashboard.types";
-import { differenceInHours, subDays } from "date-fns";
+import { differenceInHours, format, subDays } from "date-fns";
 
 export async function getExecutiveDashboardData(companyId: string) {
   const [healthScore, departments, pendingApprovals, activeAlerts, bottlenecks, goals, employees, financeEntry] =
@@ -292,4 +292,33 @@ function getGoalCompletion(goals: { currentValue: number; targetValue: number }[
   if (goals.length === 0) return 0;
   const completed = goals.filter((g) => g.targetValue > 0 && g.currentValue / g.targetValue >= 0.9).length;
   return Math.round((completed / goals.length) * 100);
+}
+
+export async function getRevenueHistory(companyId: string): Promise<{ date: string; revenue: number; burn: number }[]> {
+  const financeDept = await prisma.department.findFirst({
+    where: { companyId, slug: "finance" },
+    select: { id: true },
+  });
+  if (!financeDept) return [];
+
+  const entries = await prisma.metricEntry.findMany({
+    where: {
+      companyId,
+      departmentId: financeDept.id,
+      businessDate: { gte: subDays(new Date(), 60) },
+    },
+    orderBy: { businessDate: "asc" },
+  });
+
+  const byDate = new Map<string, { revenue: number; burn: number }>();
+  for (const entry of entries) {
+    const key = format(entry.businessDate, "MMM d");
+    const data = entry.data as Record<string, number>;
+    byDate.set(key, {
+      revenue: data["monthly_revenue"] ?? data["mrr"] ?? 0,
+      burn: data["burn_rate"] ?? 0,
+    });
+  }
+
+  return Array.from(byDate.entries()).map(([date, vals]) => ({ date, ...vals }));
 }

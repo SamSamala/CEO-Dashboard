@@ -2,17 +2,19 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getExecutiveDashboardData, getFounderActionItems } from "@/server/queries/dashboard.queries";
+import { getExecutiveDashboardData, getFounderActionItems, getRevenueHistory } from "@/server/queries/dashboard.queries";
 import { HealthScoreWidget } from "@/components/dashboard/health-score-widget";
 import { DeptHealthGrid } from "@/components/dashboard/dept-health-grid";
 import { ActionCenter } from "@/components/dashboard/action-center";
 import { BottleneckSummary } from "@/components/dashboard/bottleneck-summary";
 import { PendingApprovalsWidget } from "@/components/dashboard/pending-approvals-widget";
+import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
 import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/shared/loading-skeleton";
 import { EmployeeHome } from "@/components/employee/employee-home";
+import Link from "next/link";
 import {
   DollarSign, Wallet, TrendingUp, Clock, Users, AlertTriangle, Flame
 } from "lucide-react";
@@ -78,9 +80,10 @@ export default async function DashboardPage() {
 }
 
 async function DashboardContent({ companyId }: { companyId: string }) {
-  const [dashData, actionItems] = await Promise.all([
+  const [dashData, actionItems, revenueHistory] = await Promise.all([
     getExecutiveDashboardData(companyId),
     getFounderActionItems(companyId),
+    getRevenueHistory(companyId),
   ]);
 
   const { healthScore, deptScorecards, pendingApprovals, activeAlerts, bottlenecks, employeeCount, finance } = dashData;
@@ -127,6 +130,19 @@ async function DashboardContent({ companyId }: { companyId: string }) {
         />
       </div>
 
+      {/* Revenue Trends Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            Revenue Trends
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RevenueTrendChart data={revenueHistory} />
+        </CardContent>
+      </Card>
+
       {/* Main content: Health Score + Action Center */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Health Score */}
@@ -169,7 +185,9 @@ async function DashboardContent({ companyId }: { companyId: string }) {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              Active Bottlenecks
+              <Link href="/bottlenecks" className="hover:underline">
+                Active Bottlenecks
+              </Link>
               {bottlenecks.length > 0 && (
                 <span className="ml-auto text-xs text-muted-foreground">{bottlenecks.length}</span>
               )}
