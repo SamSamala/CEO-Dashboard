@@ -4,6 +4,32 @@ A complete business operating system for founders and their teams. Track KPIs, d
 
 ---
 
+## 📣 Sharing this with other founders & CEOs — read this first
+
+> **Every founder gets their own private copy. You are NOT all sharing one app or one database.**
+
+When someone clicks the **Deploy with Vercel** button below, Vercel automatically **creates a fresh copy of this project inside *their own* GitHub account** and deploys it as *their own* app. They do **not** deploy from this repository, and they never push data into it.
+
+So each person who deploys ends up with their **own**:
+
+- 🗂️ **GitHub repository** — their private copy of the code (auto-created by the Deploy button)
+- 🚀 **Vercel project** — their own live URL (e.g. `their-company.vercel.app`)
+- 🔒 **Database** — their own free Neon Postgres, holding only their company's data
+
+### Where does the data live?
+
+**All data — every metric, employee, expense, goal, approval, and CSV upload — is stored in each founder's own database, not in this repository or in Vercel's code.** This codebase contains *only the application* (the features and layout). It ships with **zero company data**. When you deploy, you get empty tables; you create your CEO account at `/register` and your data builds up in *your* database from there.
+
+This means:
+
+- Nothing you enter is ever visible to me or to any other founder
+- Deleting your Vercel project / Neon database deletes your data — it was never anywhere else
+- Updating this template repo does **not** touch anyone's live data
+
+**To share:** just send people this repository link and tell them to follow the steps below. Each one clicks **Deploy**, connects their own free Neon database, and gets a fully isolated instance. ✅
+
+---
+
 ## Setup Guide
 
 Follow these 10 steps to get your dashboard live. No technical knowledge required.
