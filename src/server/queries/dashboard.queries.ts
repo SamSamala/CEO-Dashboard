@@ -305,20 +305,27 @@ export async function getRevenueHistory(companyId: string): Promise<{ date: stri
     where: {
       companyId,
       departmentId: financeDept.id,
-      businessDate: { gte: subDays(new Date(), 60) },
+      businessDate: { gte: subDays(new Date(), 365) },
     },
     orderBy: { businessDate: "asc" },
   });
 
-  const byDate = new Map<string, { revenue: number; burn: number }>();
+  // Group by "MMM yyyy" so each calendar month shows as one bar/point
+  const byMonth = new Map<string, { revenue: number; burn: number; sortKey: string }>();
   for (const entry of entries) {
-    const key = format(entry.businessDate, "MMM d");
+    const key = format(entry.businessDate, "MMM yyyy");
+    const sortKey = format(entry.businessDate, "yyyy-MM");
     const data = entry.data as Record<string, number>;
-    byDate.set(key, {
-      revenue: data["monthly_revenue"] ?? data["mrr"] ?? 0,
-      burn: data["burn_rate"] ?? 0,
-    });
+    const revenue = data["monthly_revenue"] ?? data["mrr"] ?? 0;
+    const burn = data["burn_rate"] ?? 0;
+    // Keep the entry with the highest revenue for the month (most recent meaningful data)
+    const existing = byMonth.get(key);
+    if (!existing || revenue > existing.revenue) {
+      byMonth.set(key, { revenue, burn, sortKey });
+    }
   }
 
-  return Array.from(byDate.entries()).map(([date, vals]) => ({ date, ...vals }));
+  return Array.from(byMonth.entries())
+    .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
+    .map(([date, vals]) => ({ date, revenue: vals.revenue, burn: vals.burn }));
 }
