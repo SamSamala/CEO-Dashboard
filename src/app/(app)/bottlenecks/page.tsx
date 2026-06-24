@@ -28,10 +28,10 @@ export default async function BottleneckCenterPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="border-b pb-4">
         <div className="flex items-center gap-2">
           <Gauge className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold tracking-tight">
             {isCeo ? "Bottleneck Center" : "Department Bottleneck Status"}
           </h1>
         </div>

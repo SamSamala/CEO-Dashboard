@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatCurrency, getCurrentPeriodKey } from "@/lib/utils";
@@ -33,18 +34,16 @@ export default async function SpendingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Spending</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {period} — {expenses.length} expense{expenses.length !== 1 ? "s" : ""} · Total: {formatCurrency(total)}
-          </p>
-        </div>
-        <Link href="/spending/new" className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors">
-          <Plus className="h-4 w-4" />
-          Log Expense
-        </Link>
-      </div>
+      <PageHeader
+        title="Spending"
+        subtitle={<>{period} — {expenses.length} expense{expenses.length !== 1 ? "s" : ""} · Total: {formatCurrency(total)}</>}
+        actions={
+          <Link href="/spending/new" className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors">
+            <Plus className="h-4 w-4" />
+            Log Expense
+          </Link>
+        }
+      />
 
       <Card>
         <CardContent className="p-0">

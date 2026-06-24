@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,12 +35,10 @@ export default async function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Alerts</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {active.filter(a => a.severity === "CRITICAL").length} critical · {active.length} total active
-        </p>
-      </div>
+      <PageHeader
+        title="Alerts"
+        subtitle={`${active.filter(a => a.severity === "CRITICAL").length} critical · ${active.length} total active`}
+      />
 
       {active.length === 0 ? (
         <Card>

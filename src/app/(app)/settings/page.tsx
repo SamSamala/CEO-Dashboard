@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,10 +30,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground text-sm mt-1">Configure your CEO Operating System</p>
-      </div>
+      <PageHeader
+        title="Settings"
+        subtitle="Configure your CEO Operating System"
+      />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Company Overview</CardTitle></CardHeader>

@@ -93,7 +93,9 @@ export default async function AppLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <AppHeader activeAlerts={activeAlerts} />
         <main className="flex-1 overflow-y-auto bg-muted/20 p-4 lg:p-6">
-          {children}
+          <div className="mx-auto w-full max-w-screen-2xl">
+            {children}
+          </div>
         </main>
       </div>
     </div>

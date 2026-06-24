@@ -9,6 +9,7 @@ import { ActionCenter } from "@/components/dashboard/action-center";
 import { BottleneckSummary } from "@/components/dashboard/bottleneck-summary";
 import { PendingApprovalsWidget } from "@/components/dashboard/pending-approvals-widget";
 import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
+import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -94,12 +95,10 @@ async function DashboardContent({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">CEO Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Your company at a glance — {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-      </div>
+      <PageHeader
+        title="CEO Dashboard"
+        subtitle={`Your company at a glance — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}`}
+      />
 
       {/* Top KPI strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -130,21 +129,20 @@ async function DashboardContent({ companyId }: { companyId: string }) {
         />
       </div>
 
-      {/* Revenue Trends Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
-            Revenue Trends
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RevenueTrendChart data={revenueHistory} />
-        </CardContent>
-      </Card>
-
-      {/* Main content: Health Score + Action Center */}
+      {/* Revenue Trends + Health Score side-by-side */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              Revenue Trends
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RevenueTrendChart data={revenueHistory} />
+          </CardContent>
+        </Card>
+
         {/* Health Score */}
         <Card>
           <CardHeader>
@@ -154,24 +152,24 @@ async function DashboardContent({ companyId }: { companyId: string }) {
             <HealthScoreWidget healthScore={healthScore} />
           </CardContent>
         </Card>
-
-        {/* Founder Action Center */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Founder Action Center
-              {actionItems.length > 0 && (
-                <span className="ml-2 text-xs bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5">
-                  {actionItems.length}
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ActionCenter items={actionItems} />
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Founder Action Center — full width */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Founder Action Center
+            {actionItems.length > 0 && (
+              <span className="ml-2 text-xs bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5">
+                {actionItems.length}
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionCenter items={actionItems} />
+        </CardContent>
+      </Card>
 
       {/* Department Health Grid */}
       <div>

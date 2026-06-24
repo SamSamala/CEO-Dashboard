@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,12 +36,10 @@ export default async function EmployeesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Employees</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {employees.length} active employee{employees.length !== 1 ? "s" : ""}
-        </p>
-      </div>
+      <PageHeader
+        title="Employees"
+        subtitle={`${employees.length} active employee${employees.length !== 1 ? "s" : ""}`}
+      />
 
       {employees.length === 0 ? (
         <Card>

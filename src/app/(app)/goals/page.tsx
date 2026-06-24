@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,15 +39,11 @@ export default async function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Goals</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {goals.filter(g => g.status === "COMPLETED").length}/{goals.length} completed
-          </p>
-        </div>
-        {session.user.role !== "EMPLOYEE" && <GoalForm />}
-      </div>
+      <PageHeader
+        title="Goals"
+        subtitle={`${goals.filter(g => g.status === "COMPLETED").length}/${goals.length} completed`}
+        actions={session.user.role !== "EMPLOYEE" ? <GoalForm /> : undefined}
+      />
 
       {goals.length === 0 ? (
         <Card>

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { computeDeptScorecard } from "@/server/services/kpi.service";
@@ -30,15 +31,11 @@ export default async function DepartmentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Departments</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            All departments and their current performance
-          </p>
-        </div>
-        {isCeo && <CreateDepartmentDialog />}
-      </div>
+      <PageHeader
+        title="Departments"
+        subtitle="All departments and their current performance"
+        actions={isCeo ? <CreateDepartmentDialog /> : undefined}
+      />
 
       {departments.length === 0 && (
         <Card>

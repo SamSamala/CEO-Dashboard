@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,15 +24,11 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Auto-generated business summaries
-          </p>
-        </div>
-        <GenerateReportButton />
-      </div>
+      <PageHeader
+        title="Reports"
+        subtitle="Auto-generated business summaries"
+        actions={<GenerateReportButton />}
+      />
 
       {reports.length === 0 ? (
         <Card>

@@ -43,15 +43,15 @@ export function StatCard({
 
   return (
     <Card
-      className={cn("transition-shadow", onClick && "cursor-pointer hover:shadow-md", className)}
+      className={cn("transition-shadow hover:shadow-sm", onClick && "cursor-pointer hover:shadow-md", className)}
       onClick={onClick}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
-          <p className="text-sm text-muted-foreground font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
           {icon && <div className="text-muted-foreground">{icon}</div>}
         </div>
-        <p className={cn("mt-2 text-2xl font-bold", STATUS_COLORS[status])}>
+        <p className={cn("mt-2 text-2xl font-bold tracking-tight", STATUS_COLORS[status])}>
           {value}
         </p>
         <div className="mt-1 flex items-center gap-2">

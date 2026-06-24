@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { PageHeader } from "@/components/shared/page-header";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -46,18 +47,16 @@ export default async function HiringPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Hiring</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {requests.filter((r: HiringRow) => r.status === "ACTIVE").length} active positions
-          </p>
-        </div>
-        <Link href="/hiring/new" className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors">
-          <Plus className="h-4 w-4" />
-          New Request
-        </Link>
-      </div>
+      <PageHeader
+        title="Hiring"
+        subtitle={`${requests.filter((r: HiringRow) => r.status === "ACTIVE").length} active positions`}
+        actions={
+          <Link href="/hiring/new" className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors">
+            <Plus className="h-4 w-4" />
+            New Request
+          </Link>
+        }
+      />
 
       {requests.length === 0 ? (
         <Card>
