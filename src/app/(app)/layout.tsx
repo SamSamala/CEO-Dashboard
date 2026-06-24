@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
 import { prisma } from "@/lib/prisma";
@@ -37,9 +38,15 @@ export default async function AppLayout({
     }
   }
 
-  // Force password change if flagged (except when already on the password page)
+  // Force password change if flagged — skip if already on the password page to prevent
+  // infinite redirect loop (layout runs for every (app) route, including /settings/password).
+  // Middleware injects x-pathname so we can read it here.
   if (dbUser?.mustChangePassword) {
-    redirect("/settings/password?forced=1");
+    const h = await headers();
+    const pathname = h.get("x-pathname") ?? "";
+    if (!pathname.startsWith("/settings/password")) {
+      redirect("/settings/password?forced=1");
+    }
   }
 
   const userTeamId = dbUser?.teamId ?? null;
