@@ -386,7 +386,7 @@ function DeptCard({
                     <div className="space-y-4 pt-2">
                       <div className="space-y-1">
                         <Label>Select Person</Label>
-                        <Select value={selectedDirectorId} onValueChange={setSelectedDirectorId}>
+                        <Select items={Object.fromEntries(eligibleDirectors.map(u => [u.id, `${u.name} (${u.email})`]))} value={selectedDirectorId} onValueChange={setSelectedDirectorId}>
                           <SelectTrigger><SelectValue placeholder="Choose person" /></SelectTrigger>
                           <SelectContent>
                             {eligibleDirectors.map((u) => (
@@ -512,7 +512,7 @@ function TeamSection({
                   <p className="text-sm text-muted-foreground">Awarding for {MONTH_NAMES[currentMonth]} {currentYear}</p>
                   <div className="space-y-1">
                     <Label>Select Employee *</Label>
-                    <Select value={eomEmployeeId} onValueChange={setEomEmployeeId}>
+                    <Select items={Object.fromEntries((teamEmployees.length > 0 ? teamEmployees : employees).map(e => [e.id, `${e.firstName} ${e.lastName}`]))} value={eomEmployeeId} onValueChange={setEomEmployeeId}>
                       <SelectTrigger><SelectValue placeholder="Choose employee" /></SelectTrigger>
                       <SelectContent>
                         {(teamEmployees.length > 0 ? teamEmployees : employees).map((e) => (
@@ -553,7 +553,7 @@ function TeamSection({
                 <div className="space-y-4 pt-2">
                   <div className="space-y-1">
                     <Label>Select Leader</Label>
-                    <Select value={selectedLeaderId} onValueChange={setSelectedLeaderId}>
+                    <Select items={Object.fromEntries(companyUsers.map(u => [u.id, `${u.name} (${u.email})`]))} value={selectedLeaderId} onValueChange={setSelectedLeaderId}>
                       <SelectTrigger><SelectValue placeholder="Choose person" /></SelectTrigger>
                       <SelectContent>
                         {companyUsers.map((u) => (
@@ -589,7 +589,7 @@ function TeamSection({
                 <div className="space-y-4 pt-2">
                   <div className="space-y-1">
                     <Label>Select Person</Label>
-                    <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                    <Select items={Object.fromEntries(availableToAdd.map(u => [u.id, `${u.name} (${u.email})`]))} value={selectedMemberId} onValueChange={setSelectedMemberId}>
                       <SelectTrigger><SelectValue placeholder="Choose person" /></SelectTrigger>
                       <SelectContent>
                         {availableToAdd.map((u) => (
