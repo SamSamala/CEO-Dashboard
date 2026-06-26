@@ -157,10 +157,13 @@ export function DataImportClient({ departments, recentJobs, deptKpis }: Props) {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <Label>Department</Label>
-              <Select onValueChange={v => {
-                setDeptId(v as string);
-                setDeptSlug(departments.find(d => d.id === v)?.slug ?? "");
-              }}>
+              <Select
+                items={Object.fromEntries(departments.map(d => [d.id, d.name]))}
+                onValueChange={v => {
+                  setDeptId(v as string);
+                  setDeptSlug(departments.find(d => d.id === v)?.slug ?? "");
+                }}
+              >
                 <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                 <SelectContent>
                   {departments.map(d => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
