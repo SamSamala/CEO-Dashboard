@@ -127,4 +127,30 @@
   html {
     @apply font-sans;
   }
+
+  /* Thin, unobtrusive scrollbars — replaces the chunky default (with arrow
+     buttons) that Windows renders on the dashboard's scroll areas. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+  }
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
