@@ -8,13 +8,17 @@ interface HealthScoreWidgetProps {
   healthScore: HealthScore;
 }
 
-function getScoreColor(score: number): string {
+const NO_DATA_COLOR = "#9ca3af";
+
+function getScoreColor(score: number | null): string {
+  if (score === null) return NO_DATA_COLOR;
   if (score >= 75) return "#10b981";
   if (score >= 50) return "#f59e0b";
   return "#ef4444";
 }
 
-function getScoreLabel(score: number): string {
+function getScoreLabel(score: number | null): string {
+  if (score === null) return "Awaiting data";
   if (score >= 75) return "Healthy";
   if (score >= 50) return "At Risk";
   return "Critical";
@@ -24,7 +28,8 @@ export function HealthScoreWidget({ healthScore }: HealthScoreWidgetProps) {
   const { score, breakdown } = healthScore;
   const color = getScoreColor(score);
 
-  const data = [{ name: "score", value: score, fill: color }];
+  // Render an empty track when there is nothing to score yet.
+  const data = [{ name: "score", value: score ?? 0, fill: color }];
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -44,7 +49,7 @@ export function HealthScoreWidget({ healthScore }: HealthScoreWidgetProps) {
           </RadialBarChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold" style={{ color }}>{score}</span>
+          <span className="text-3xl font-bold" style={{ color }}>{score ?? "—"}</span>
           <span className="text-xs text-muted-foreground mt-0.5">{getScoreLabel(score)}</span>
         </div>
       </div>
@@ -57,10 +62,10 @@ export function HealthScoreWidget({ healthScore }: HealthScoreWidgetProps) {
               <div className="w-16 bg-muted rounded-full h-1.5">
                 <div
                   className="h-1.5 rounded-full"
-                  style={{ width: `${val}%`, backgroundColor: getScoreColor(val) }}
+                  style={{ width: `${val ?? 0}%`, backgroundColor: getScoreColor(val) }}
                 />
               </div>
-              <span className="font-medium w-8 text-right">{val}%</span>
+              <span className="font-medium w-8 text-right">{val === null ? "—" : `${val}%`}</span>
             </div>
           </div>
         ))}

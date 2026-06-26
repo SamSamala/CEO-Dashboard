@@ -1,11 +1,11 @@
 export interface HealthScore {
-  score: number;
+  score: number | null;
   breakdown: {
-    revenue: number;
-    departments: number;
-    runway: number;
-    goals: number;
-    bottlenecks: number;
+    revenue: number | null;
+    departments: number | null;
+    runway: number | null;
+    goals: number | null;
+    bottlenecks: number | null;
   };
 }
 
