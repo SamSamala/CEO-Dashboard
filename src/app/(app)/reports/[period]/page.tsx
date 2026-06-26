@@ -58,9 +58,11 @@ export default async function ReportPage({ params }: PageProps) {
               <div key={d.slug} className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">{d.name}</span>
-                  <span className="text-muted-foreground">{d.score.toFixed(0)}%</span>
+                  <span className="text-muted-foreground">
+                    {d.status === "gray" ? "No data" : `${d.score.toFixed(0)}%`}
+                  </span>
                 </div>
-                <Progress value={d.score} className="h-2" />
+                <Progress value={d.status === "gray" ? 0 : d.score} className="h-2" />
               </div>
             ))}
           </div>

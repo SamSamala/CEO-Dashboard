@@ -94,7 +94,9 @@ export default async function DepartmentPage({ params }: PageProps) {
             <div className="space-y-4">
               <div className="flex items-center gap-4 flex-wrap">
                 <div>
-                  <div className="text-3xl font-bold">{scorecard.performanceScore.toFixed(0)}%</div>
+                  <div className="text-3xl font-bold">
+                    {scorecard.status === "gray" ? "—" : `${scorecard.performanceScore.toFixed(0)}%`}
+                  </div>
                   <div className="text-muted-foreground text-xs">Performance Score</div>
                 </div>
                 {!isEmployee && (

@@ -51,7 +51,7 @@ export interface DeptHealthScore {
   trendScore: number;
   riskScore: number;
   dataConfidenceScore: number;
-  goalCompletion: number;
+  goalCompletion: number | null;
   budgetUtilization: number | null;
   status: "green" | "orange" | "red" | "gray";
   bottleneckCount: number;

@@ -35,7 +35,7 @@ export const generateReport = authActionClient
     const deptScores = await Promise.all(
       departments.map(async (d) => {
         const sc = await computeDeptScorecard(d.id, companyId).catch(() => null);
-        return { name: d.name, slug: d.slug, score: sc?.performanceScore ?? 0, status: sc?.status ?? "red" };
+        return { name: d.name, slug: d.slug, score: sc?.performanceScore ?? 0, status: sc?.status ?? "gray" };
       })
     );
 

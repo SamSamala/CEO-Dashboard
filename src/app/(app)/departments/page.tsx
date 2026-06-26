@@ -54,7 +54,8 @@ export default async function DepartmentsPage() {
         {departments.map((dept, i) => {
           const scorecard = scorecards[i];
           const score = scorecard?.performanceScore ?? 0;
-          const status = scorecard?.status ?? "red";
+          const status = scorecard?.status ?? "gray";
+          const hasData = status !== "gray";
 
           return (
             <Link key={dept.id} href={`/departments/${dept.slug.toLowerCase()}`}>
@@ -75,9 +76,9 @@ export default async function DepartmentsPage() {
                   <div>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Performance</span>
-                      <span className="font-medium">{score.toFixed(0)}%</span>
+                      <span className="font-medium">{hasData ? `${score.toFixed(0)}%` : "—"}</span>
                     </div>
-                    <Progress value={score} className="h-2" />
+                    <Progress value={hasData ? score : 0} className="h-2" />
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{scorecard?.kpis.length ?? 0} KPIs tracked</span>

@@ -28,9 +28,11 @@ export function DeptHealthGrid({ scorecards }: DeptHealthGridProps) {
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Performance</span>
-              <span className="font-medium">{dept.performanceScore.toFixed(0)}%</span>
+              <span className="font-medium">
+                {dept.status === "gray" ? "—" : `${dept.performanceScore.toFixed(0)}%`}
+              </span>
             </div>
-            <Progress value={dept.performanceScore} className="h-1.5" />
+            <Progress value={dept.status === "gray" ? 0 : dept.performanceScore} className="h-1.5" />
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -42,7 +44,9 @@ export function DeptHealthGrid({ scorecards }: DeptHealthGridProps) {
             </div>
             <div>
               <p className="text-muted-foreground">Goals</p>
-              <p className="font-medium">{dept.goalCompletion}%</p>
+              <p className="font-medium">
+                {dept.goalCompletion != null ? `${dept.goalCompletion}%` : "—"}
+              </p>
             </div>
           </div>
 

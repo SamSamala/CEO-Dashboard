@@ -40,7 +40,7 @@ export async function getExecutiveDashboardData(companyId: string) {
       const scorecard = await computeDeptScorecard(dept.id, companyId).catch(() => null);
       const budgetUsage = await getBudgetUtilization(companyId, dept.id);
       const deptGoals = goals.filter((g) => g.departmentId === dept.id);
-      const goalCompletion = deptGoals.length > 0 ? getGoalCompletion(deptGoals) : 0;
+      const goalCompletion = deptGoals.length > 0 ? getGoalCompletion(deptGoals) : null;
       const deptBottlenecks = bottlenecks.filter((b) => b.departmentId === dept.id).length;
 
       return {
