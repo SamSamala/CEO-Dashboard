@@ -9,7 +9,7 @@ export default async function ImportPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [departments, templates, recentJobs] = await Promise.all([
+  const [departments, templates, recentJobs, kpiConfigs] = await Promise.all([
     prisma.department.findMany({
       where: { companyId: session.user.companyId, isActive: true },
       select: { id: true, name: true, slug: true },
@@ -24,7 +24,19 @@ export default async function ImportPage() {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    prisma.kpiConfig.findMany({
+      where: { companyId: session.user.companyId, isActive: true },
+      select: { departmentId: true, key: true, label: true },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
+
+  // Group each department's real KPI keys so the importer can map and build
+  // templates against the actual metrics that department tracks.
+  const deptKpis: Record<string, { key: string; label: string }[]> = {};
+  for (const k of kpiConfigs) {
+    (deptKpis[k.departmentId] ??= []).push({ key: k.key, label: k.label });
+  }
 
   return (
     <div className="space-y-6">
@@ -38,6 +50,7 @@ export default async function ImportPage() {
         departments={departments}
         templates={templates as any}
         recentJobs={recentJobs}
+        deptKpis={deptKpis}
         companyId={session.user.companyId}
       />
     </div>
