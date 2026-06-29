@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
+import { Watermark } from "@/components/layout/watermark";
 import { prisma } from "@/lib/prisma";
 
 export default async function AppLayout({
@@ -98,6 +99,7 @@ export default async function AppLayout({
           </div>
         </main>
       </div>
+      <Watermark />
     </div>
   );
 }
